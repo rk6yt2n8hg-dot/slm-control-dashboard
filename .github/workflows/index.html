@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SLM-Control Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+            padding: 20px;
+            min-height: 100vh;
+            color: #ffffff;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 30px;
+            background: linear-gradient(135deg, #3d3d3d 0%, #2d2d2d 100%);
+            border-radius: 20px;
+            border: 2px solid #ff1493;
+        }
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .status-badge.online {
+            background: #51cf66;
+            color: #1a1a1a;
+            animation: pulse 2s infinite;
+        }
+        .status-badge.offline {
+            background: #ff4444;
+            color: white;
+        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .stat-card {
+            background: linear-gradient(135deg, #3d3d3d 0%, #2d2d2d 100%);
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid #ff1493;
+        }
+        .stat-card h3 {
+            color: #ff69b4;
+            font-size: 0.9em;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+        .stat-card .value {
+            font-size: 3em;
+            font-weight: bold;
+            color: #ff1493;
+        }
+        .stat-card .unit {
+            color: #aaa;
+            margin-top: 5px;
+            font-size: 1.1em;
+        }
+        
+        .led-panel {
+            background: #3d3d3d;
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            border: 2px solid #ff1493;
+        }
+        .led-panel h3 {
+            color: #ff69b4;
+            font-size: 1.5em;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .led-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .led-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 10px;
+        }
+        .led {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            background: #333;
+            border: 3px solid #555;
+            flex-shrink: 0;
+        }
+        .led.blue.on {
+            background: #339af0;
+            border-color: #339af0;
+            box-shadow: 0 0 25px #339af0;
+            animation: pulse-led 1.5s infinite;
+        }
+        .led.yellow.on {
+            background: #ffd700;
+            border-color: #ffd700;
+            box-shadow: 0 0 25px #ffd700;
+            animation: pulse-led 1.5s infinite;
+        }
+        .led.green.on {
+            background: #51cf66;
+            border-color: #51cf66;
+            box-shadow: 0 0 25px #51cf66;
+            animation: pulse-led 1.5s infinite;
+        }
+        .led.red.on {
+            background: #ff4444;
+            border-color: #ff4444;
+            box-shadow: 0 0 25px #ff4444;
+            animation: pulse-led 1.5s infinite;
+        }
+        @keyframes pulse-led { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        
+        .led-label {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .led-label strong {
+            color: #ff69b4;
+            font-size: 1.1em;
+        }
+        .led-label span {
+            color: #aaa;
+            font-size: 0.9em;
+        }
+        
+        .controls {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        button {
+            background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            margin: 0 10px;
+        }
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 20px rgba(255, 20, 147, 0.4);
+        }
+        button.active {
+            background: linear-gradient(135deg, #51cf66 0%, #40c057 100%);
+            animation: pulse 1.5s infinite;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 30px;
+            border-top: 2px solid #ff1493;
+            color: #aaa;
+        }
+        .footer .creator {
+            color: #ff1493;
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .last-update {
+            text-align: center;
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #ff69b4;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌡️ SLM-Control Dashboard</h1>
+            <p style="color: #aaa; margin-top: 10px;">Live Monitoring von überall</p>
+            <div class="status-badge" id="statusBadge">Offline</div>
+            <div class="last-update" id="lastUpdate">Warte auf Daten...</div>
+        </div>
+        
+        <div class="controls">
+            <button id="realtimeBtn" onclick="toggleRealtime()">🔄 5s Updates</button>
+        </div>
+        
+        <div id="loadingDiv" class="loading">
+            Verbinde mit Firebase...<br>
+            <span style="font-size: 0.8em; color: #666;">Bitte warten...</span>
+        </div>
+        
+        <div id="dataDiv" style="display: none;">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3>Temperatur</h3>
+                    <div class="value" id="tempValue">--</div>
+                    <div class="unit">°C</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Wunsch-Temp</h3>
+                    <div class="value" id="targetValue">--</div>
+                    <div class="unit">°C</div>
+                </div>
+                <div class="stat-card">
+                    <h3>Luftfeuchtigkeit</h3>
+                    <div class="value" id="humValue">--</div>
+                    <div class="unit">% rF</div>
+                </div>
+            </div>
+            
+            <div class="led-panel">
+                <h3>📍 System-Status</h3>
+                <div class="led-grid">
+                    <div class="led-item">
+                        <div class="led blue" id="led1"></div>
+                        <div class="led-label">
+                            <strong>Lüfter</strong>
+                            <span>Relais 1</span>
+                        </div>
+                    </div>
+                    <div class="led-item">
+                        <div class="led yellow" id="led2"></div>
+                        <div class="led-label">
+                            <strong>Filter prüfen</strong>
+                            <span>Relais 2</span>
+                        </div>
+                    </div>
+                    <div class="led-item">
+                        <div class="led green" id="led3"></div>
+                        <div class="led-label">
+                            <strong>Temp OK</strong>
+                            <span>Relais 3</span>
+                        </div>
+                    </div>
+                    <div class="led-item">
+                        <div class="led red" id="led4"></div>
+                        <div class="led-label">
+                            <strong>Lüfter Defekt</strong>
+                            <span>Alarm</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>Made by <span class="creator">David Omowanile</span></p>
+            <p style="margin-top: 10px; font-size: 0.9em;">
+                Powered by Firebase & GitHub Pages
+            </p>
+        </div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, onValue, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC1lP4MWFoeJ8CojZNOFR1azmwv0JH7LoA",
+            authDomain: "slm-control.firebaseapp.com",
+            databaseURL: "https://slm-control-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "slm-control",
+            storageBucket: "slm-control.firebasestorage.app",
+            messagingSenderId: "768088564680",
+            appId: "1:768088564680:web:7657008a3432a5c08c56fd",
+            measurementId: "G-Q42CWTNSM8"
+        };
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const statusRef = ref(database, 'slm-control/status');
+
+        let isRealtimeMode = false;
+        let updateInterval = null;
+
+        // Initial Load
+        loadData();
+
+        // Start polling (5 seconds)
+        updateInterval = setInterval(() => {
+            if (!isRealtimeMode) {
+                loadData();
+            }
+        }, 5000);
+
+        // Load data once
+        function loadData() {
+            get(statusRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    updateUI(snapshot.val());
+                } else {
+                    console.log("Keine Daten vorhanden");
+                }
+            }).catch((error) => {
+                console.error("Fehler:", error);
+            });
+        }
+
+        // Toggle Realtime Mode
+        window.toggleRealtime = function() {
+            const btn = document.getElementById('realtimeBtn');
+            
+            if (isRealtimeMode) {
+                // Switch to Polling Mode
+                isRealtimeMode = false;
+                btn.textContent = '🔄 5s Updates';
+                btn.classList.remove('active');
+                
+                // Restart polling
+                updateInterval = setInterval(() => {
+                    loadData();
+                }, 5000);
+                
+            } else {
+                // Switch to Realtime Mode
+                isRealtimeMode = true;
+                btn.textContent = '⚡ Echtzeit';
+                btn.classList.add('active');
+                
+                // Stop polling
+                clearInterval(updateInterval);
+                
+                // Start realtime listener
+                onValue(statusRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        updateUI(snapshot.val());
+                    }
+                });
+            }
+        };
+
+        // Update UI with data
+        function updateUI(data) {
+            // Hide loading, show data
+            document.getElementById('loadingDiv').style.display = 'none';
+            document.getElementById('dataDiv').style.display = 'block';
+            
+            // Status Badge
+            const statusBadge = document.getElementById('statusBadge');
+            if (data.online) {
+                statusBadge.textContent = '🟢 Online';
+                statusBadge.className = 'status-badge online';
+            } else {
+                statusBadge.textContent = '🔴 Offline';
+                statusBadge.className = 'status-badge offline';
+            }
+            
+            // Temperature & Humidity
+            document.getElementById('tempValue').textContent = data.temperature !== null ? data.temperature.toFixed(1) : '--';
+            document.getElementById('targetValue').textContent = data.targetTemp !== null ? data.targetTemp.toFixed(1) : '--';
+            document.getElementById('humValue').textContent = data.humidity !== null ? data.humidity.toFixed(1) : '--';
+            
+            // LEDs
+            document.getElementById('led1').classList.toggle('on', data.relay1);
+            document.getElementById('led2').classList.toggle('on', data.relay2);
+            document.getElementById('led3').classList.toggle('on', data.relay3);
+            document.getElementById('led4').classList.toggle('on', data.relay4);
+            
+            // Last Update
+            if (data.timestamp) {
+                const date = new Date(data.timestamp);
+                const time = date.toLocaleTimeString('de-DE');
+                const dateStr = date.toLocaleDateString('de-DE');
+                document.getElementById('lastUpdate').textContent = `Letztes Update: ${dateStr} ${time}`;
+            }
+        }
+    </script>
+</body>
+</html>
