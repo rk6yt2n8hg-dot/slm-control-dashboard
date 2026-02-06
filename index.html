@@ -851,7 +851,7 @@
             const actions = {
                 'interval': () => {
                     document.getElementById('intervalInput').value = Math.round(val);
-                    set(ref(database, 'slm-control/status/setInterval'), Math.round(val)).then(() => {
+                    set(ref(database, 'slm-control/status/measureInterval'), Math.round(val)).then(() => {
                         document.getElementById('intervalMsg').textContent = '✓ Gesendet';
                         setTimeout(() => document.getElementById('intervalMsg').textContent = '', 2000);
                     });
