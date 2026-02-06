@@ -19,7 +19,6 @@
         
         .container { max-width: 1800px; margin: 0 auto; }
         
-        /* HEADER */
         .header {
             text-align: center;
             margin-bottom: 25px;
@@ -36,7 +35,6 @@
             background: linear-gradient(135deg, #ff1493 0%, #ff69b4 50%, #ff1493 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
             letter-spacing: -2px;
         }
         
@@ -48,7 +46,6 @@
             text-transform: uppercase;
         }
         
-        /* CONNECTION BAR */
         .connection-bar {
             background: #1a1a1a;
             padding: 18px 25px;
@@ -121,16 +118,15 @@
             box-shadow: 0 4px 15px rgba(55, 65, 81, 0.3);
         }
         
-        /* CURRENT MONITOR - HERO SECTION */
+        /* CURRENT HERO - Screenshot friendly */
         .current-hero {
-            background: linear-gradient(135deg, #1a0a14 0%, #0f0717 100%);
+            background: #1a1a1a;
             padding: 40px;
             border-radius: 20px;
             margin-bottom: 20px;
             border: 1px solid #ff1493;
             box-shadow: 0 8px 32px rgba(255, 20, 147, 0.3);
             position: relative;
-            overflow: hidden;
         }
         
         .current-hero::before {
@@ -178,7 +174,6 @@
             background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            background-clip: text;
             line-height: 1;
             margin-bottom: 5px;
         }
@@ -195,7 +190,7 @@
             height: 120px;
         }
         
-        /* SETTINGS GRID */
+        /* SETTINGS */
         .settings-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -240,6 +235,7 @@
             width: 100px;
             font-size: 1em;
             font-weight: 600;
+            cursor: pointer;
         }
         
         .setting-card input:focus {
@@ -259,7 +255,99 @@
             margin-top: 5px;
         }
         
-        /* CHARTS SECTION */
+        /* NUMPAD MODAL */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .numpad-modal {
+            background: #1a1a1a;
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid #ff1493;
+            box-shadow: 0 20px 60px rgba(255, 20, 147, 0.4);
+            max-width: 400px;
+            width: 90%;
+        }
+        
+        .numpad-title {
+            color: #ff1493;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .numpad-display {
+            background: #0f0f0f;
+            border: 2px solid #ff1493;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            font-size: 2.5em;
+            color: #ff1493;
+            font-weight: 700;
+            margin-bottom: 20px;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .numpad-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .numpad-btn {
+            padding: 20px;
+            font-size: 1.5em;
+            font-weight: 700;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .numpad-btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .numpad-btn.delete {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+        
+        .numpad-btn.zero {
+            grid-column: span 2;
+        }
+        
+        .numpad-actions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .numpad-actions button {
+            padding: 15px;
+            font-size: 1.1em;
+        }
+        
+        /* CHARTS */
         .charts-section {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -326,7 +414,7 @@
             position: relative;
         }
         
-        /* LEDS - COMPACT */
+        /* LEDS */
         .leds-bar {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
@@ -363,29 +451,10 @@
             50% { opacity: 0.7; }
         }
         
-        .led.blue.on {
-            background: #3b82f6;
-            border-color: #3b82f6;
-            color: #3b82f6;
-        }
-        
-        .led.yellow.on {
-            background: #facc15;
-            border-color: #facc15;
-            color: #facc15;
-        }
-        
-        .led.green.on {
-            background: #10b981;
-            border-color: #10b981;
-            color: #10b981;
-        }
-        
-        .led.red.on {
-            background: #ef4444;
-            border-color: #ef4444;
-            color: #ef4444;
-        }
+        .led.blue.on { background: #3b82f6; border-color: #3b82f6; color: #3b82f6; }
+        .led.yellow.on { background: #facc15; border-color: #facc15; color: #facc15; }
+        .led.green.on { background: #10b981; border-color: #10b981; color: #10b981; }
+        .led.red.on { background: #ef4444; border-color: #ef4444; color: #ef4444; }
         
         .led-label strong {
             color: #e0e0e0;
@@ -398,7 +467,7 @@
             font-size: 0.75em;
         }
         
-        /* ERRORS TABLE */
+        /* ERRORS */
         .errors-section {
             background: #1a1a1a;
             padding: 25px;
@@ -511,14 +580,15 @@
                 <span id="statusText">Initialisiere...</span>
             </div>
             <div class="controls">
-                <button id="realtimeBtn" onclick="toggleRealtime()">🔄 Auto-Update</button>
+                <button id="intervalBtn" onclick="setIntervalMode()">⏱️ Intervall-Update</button>
+                <button id="realtimeBtn" onclick="setRealtimeMode()">⚡ Echtzeit</button>
                 <button class="secondary" onclick="takeScreenshot()">📸 Screenshot</button>
                 <button class="secondary" onclick="exportCSV()">📥 Export</button>
                 <button class="secondary" onclick="location.reload()">🔄 Reload</button>
             </div>
         </div>
         
-        <!-- CURRENT MONITOR HERO -->
+        <!-- CURRENT HERO -->
         <div class="current-hero">
             <div class="current-display">
                 <div class="current-value-box">
@@ -539,9 +609,8 @@
             <div class="setting-card">
                 <h4>⏱️ Messintervall</h4>
                 <div class="setting-input-group">
-                    <input type="number" id="intervalInput" min="5" max="600" value="30">
+                    <input type="text" id="intervalInput" readonly value="30" onclick="openNumpad('interval', this.value, 'Sekunden', 5, 600)">
                     <label>Sekunden</label>
-                    <button onclick="changeInterval()">Set</button>
                 </div>
                 <div class="status-msg" id="intervalMsg"></div>
             </div>
@@ -549,9 +618,8 @@
             <div class="setting-card">
                 <h4>🌡️ Wunsch-Temperatur</h4>
                 <div class="setting-input-group">
-                    <input type="number" id="targetTempInput" min="10" max="40" step="0.5" value="24.0">
+                    <input type="text" id="targetTempInput" readonly value="24.0" onclick="openNumpad('targetTemp', this.value, '°C', 10, 40)">
                     <label>°C</label>
-                    <button onclick="changeTargetTemp()">Set</button>
                 </div>
                 <div class="status-msg" id="tempMsg"></div>
             </div>
@@ -559,9 +627,8 @@
             <div class="setting-card">
                 <h4>⚡ Strom Überlast</h4>
                 <div class="setting-input-group">
-                    <input type="number" id="overloadInput" min="1" max="5" step="0.1" value="4.0">
+                    <input type="text" id="overloadInput" readonly value="4.0" onclick="openNumpad('overload', this.value, 'Ampere', 1, 5)">
                     <label>Ampere</label>
-                    <button onclick="changeOverload()">Set</button>
                 </div>
                 <div class="status-msg" id="overloadMsg"></div>
             </div>
@@ -569,9 +636,8 @@
             <div class="setting-card">
                 <h4>⚠️ Lüfter Ausfall</h4>
                 <div class="setting-input-group">
-                    <input type="number" id="failedInput" min="0.05" max="1" step="0.05" value="0.1">
+                    <input type="text" id="failedInput" readonly value="0.1" onclick="openNumpad('failed', this.value, 'A (min)', 0.05, 1)">
                     <label>A (min)</label>
-                    <button onclick="changeFailed()">Set</button>
                 </div>
                 <div class="status-msg" id="failedMsg"></div>
             </div>
@@ -579,9 +645,8 @@
             <div class="setting-card">
                 <h4>🔥 Temp Kritisch</h4>
                 <div class="setting-input-group">
-                    <input type="number" id="tempCritInput" min="25" max="50" step="1" value="35">
+                    <input type="text" id="tempCritInput" readonly value="35" onclick="openNumpad('tempCrit', this.value, '°C', 25, 50)">
                     <label>°C</label>
-                    <button onclick="changeTempCrit()">Set</button>
                 </div>
                 <div class="status-msg" id="tempCritMsg"></div>
             </div>
@@ -589,9 +654,8 @@
             <div class="setting-card">
                 <h4>💧 LF Kritisch</h4>
                 <div class="setting-input-group">
-                    <input type="number" id="humCritInput" min="50" max="100" step="5" value="80">
+                    <input type="text" id="humCritInput" readonly value="80" onclick="openNumpad('humCrit', this.value, '% rF', 50, 100)">
                     <label>% rF</label>
-                    <button onclick="changeHumCrit()">Set</button>
                 </div>
                 <div class="status-msg" id="humCritMsg"></div>
             </div>
@@ -603,7 +667,6 @@
                 <h3>🌡️ Temperatur</h3>
                 <div class="stats-mini-grid">
                     <div class="stat-mini"><h5>Aktuell</h5><div class="value" id="tempCurrent">--</div><div class="unit">°C</div></div>
-                    <div class="stat-mini"><h5>Wunsch</h5><div class="value" id="tempTarget">--</div><div class="unit">°C</div></div>
                     <div class="stat-mini"><h5>Min</h5><div class="value" id="tempMin">--</div><div class="unit">°C</div></div>
                     <div class="stat-mini"><h5>Ø</h5><div class="value" id="tempAvg">--</div><div class="unit">°C</div></div>
                     <div class="stat-mini"><h5>Max</h5><div class="value" id="tempMax">--</div><div class="unit">°C</div></div>
@@ -658,6 +721,33 @@
         </div>
     </div>
 
+    <!-- NUMPAD MODAL -->
+    <div class="modal" id="numpadModal">
+        <div class="numpad-modal">
+            <div class="numpad-title" id="numpadTitle">Wert eingeben</div>
+            <div class="numpad-display" id="numpadDisplay">0</div>
+            <div class="numpad-grid">
+                <button class="numpad-btn" onclick="numpadInput('7')">7</button>
+                <button class="numpad-btn" onclick="numpadInput('8')">8</button>
+                <button class="numpad-btn" onclick="numpadInput('9')">9</button>
+                <button class="numpad-btn delete" onclick="numpadDelete()">⌫</button>
+                <button class="numpad-btn" onclick="numpadInput('4')">4</button>
+                <button class="numpad-btn" onclick="numpadInput('5')">5</button>
+                <button class="numpad-btn" onclick="numpadInput('6')">6</button>
+                <button class="numpad-btn" onclick="numpadInput('.')">.</button>
+                <button class="numpad-btn" onclick="numpadInput('1')">1</button>
+                <button class="numpad-btn" onclick="numpadInput('2')">2</button>
+                <button class="numpad-btn" onclick="numpadInput('3')">3</button>
+                <button class="numpad-btn" onclick="numpadClear()">C</button>
+                <button class="numpad-btn zero" onclick="numpadInput('0')">0</button>
+            </div>
+            <div class="numpad-actions">
+                <button class="secondary" onclick="closeNumpad()">✗ Abbrechen</button>
+                <button onclick="numpadConfirm()">✓ Bestätigen</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
         import { getDatabase, ref, onValue, get, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
@@ -675,15 +765,19 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         const statusRef = ref(database, 'slm-control/status');
-        const historyRef = ref(database, 'slm-control/history');
         const errorsRef = ref(database, 'slm-control/errors');
 
         let tempChart, humChart, currentChart;
-        let isRealtimeMode = true;
+        let isRealtimeMode = false;
         let updateInterval = null;
         let measureInterval = 30;
         
         let tempData = [], humData = [], currentData = [], timeLabels = [], timestamps = [];
+        
+        let numpadContext = null;
+        let numpadValue = '';
+        let numpadMin = 0;
+        let numpadMax = 100;
         
         const errorDescriptions = {
             'F001': 'DHT11 Sensor Fehler',
@@ -714,6 +808,120 @@
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#888' } } }, scales: { y: { ticks: { color: '#666' }, grid: { color: '#2a2a2a' } }, x: { ticks: { color: '#666' }, grid: { color: '#2a2a2a' } } } }
             });
         }
+
+        // NUMPAD Functions
+        window.openNumpad = (context, currentValue, unit, min, max) => {
+            numpadContext = context;
+            numpadValue = currentValue;
+            numpadMin = min;
+            numpadMax = max;
+            document.getElementById('numpadTitle').textContent = context + ' (' + unit + ')';
+            document.getElementById('numpadDisplay').textContent = currentValue;
+            document.getElementById('numpadModal').classList.add('active');
+        };
+
+        window.closeNumpad = () => {
+            document.getElementById('numpadModal').classList.remove('active');
+        };
+
+        window.numpadInput = (digit) => {
+            if (digit === '.' && numpadValue.includes('.')) return;
+            if (numpadValue === '0') numpadValue = '';
+            numpadValue += digit;
+            document.getElementById('numpadDisplay').textContent = numpadValue;
+        };
+
+        window.numpadDelete = () => {
+            numpadValue = numpadValue.slice(0, -1) || '0';
+            document.getElementById('numpadDisplay').textContent = numpadValue;
+        };
+
+        window.numpadClear = () => {
+            numpadValue = '0';
+            document.getElementById('numpadDisplay').textContent = '0';
+        };
+
+        window.numpadConfirm = () => {
+            const val = parseFloat(numpadValue);
+            if (isNaN(val) || val < numpadMin || val > numpadMax) {
+                alert(`Wert muss zwischen ${numpadMin} und ${numpadMax} liegen!`);
+                return;
+            }
+
+            const actions = {
+                'interval': () => {
+                    document.getElementById('intervalInput').value = Math.round(val);
+                    set(ref(database, 'slm-control/status/setInterval'), Math.round(val)).then(() => {
+                        document.getElementById('intervalMsg').textContent = '✓ Gesendet';
+                        setTimeout(() => document.getElementById('intervalMsg').textContent = '', 2000);
+                    });
+                },
+                'targetTemp': () => {
+                    document.getElementById('targetTempInput').value = val.toFixed(1);
+                    set(ref(database, 'slm-control/status/setTargetTemp'), val).then(() => {
+                        document.getElementById('tempMsg').textContent = '✓ Gesendet';
+                        setTimeout(() => document.getElementById('tempMsg').textContent = '', 2000);
+                    });
+                },
+                'overload': () => {
+                    document.getElementById('overloadInput').value = val.toFixed(1);
+                    set(ref(database, 'slm-control/status/setOverload'), val).then(() => {
+                        document.getElementById('overloadMsg').textContent = '✓ Gesendet';
+                        setTimeout(() => document.getElementById('overloadMsg').textContent = '', 2000);
+                    });
+                },
+                'failed': () => {
+                    document.getElementById('failedInput').value = val.toFixed(2);
+                    set(ref(database, 'slm-control/status/setFailed'), val).then(() => {
+                        document.getElementById('failedMsg').textContent = '✓ Gesendet';
+                        setTimeout(() => document.getElementById('failedMsg').textContent = '', 2000);
+                    });
+                },
+                'tempCrit': () => {
+                    document.getElementById('tempCritInput').value = Math.round(val);
+                    set(ref(database, 'slm-control/status/setTempCrit'), val).then(() => {
+                        document.getElementById('tempCritMsg').textContent = '✓ Gesendet';
+                        setTimeout(() => document.getElementById('tempCritMsg').textContent = '', 2000);
+                    });
+                },
+                'humCrit': () => {
+                    document.getElementById('humCritInput').value = Math.round(val);
+                    set(ref(database, 'slm-control/status/setHumCrit'), val).then(() => {
+                        document.getElementById('humCritMsg').textContent = '✓ Gesendet';
+                        setTimeout(() => document.getElementById('humCritMsg').textContent = '', 2000);
+                    });
+                }
+            };
+
+            if (actions[numpadContext]) actions[numpadContext]();
+            closeNumpad();
+        };
+
+        // Update Mode Buttons
+        window.setIntervalMode = () => {
+            if (isRealtimeMode) {
+                isRealtimeMode = false;
+                document.getElementById('intervalBtn').classList.add('active');
+                document.getElementById('realtimeBtn').classList.remove('active');
+                clearInterval(updateInterval);
+                updateInterval = setInterval(loadData, measureInterval * 1000);
+            }
+        };
+
+        window.setRealtimeMode = () => {
+            if (!isRealtimeMode) {
+                isRealtimeMode = true;
+                document.getElementById('realtimeBtn').classList.add('active');
+                document.getElementById('intervalBtn').classList.remove('active');
+                clearInterval(updateInterval);
+                onValue(statusRef, (snapshot) => {
+                    if (snapshot.exists()) updateUI(snapshot.val());
+                });
+                onValue(errorsRef, (snapshot) => {
+                    if (snapshot.exists()) displayErrors(snapshot.val());
+                });
+            }
+        };
 
         function addDataPoint(temp, hum, current) {
             const now = new Date();
@@ -784,11 +992,6 @@
                 addDataPoint(data.temperature, data.humidity, data.current || 0);
             }
             
-            if (data.targetTemp) {
-                document.getElementById('tempTarget').textContent = data.targetTemp.toFixed(1);
-                document.getElementById('targetTempInput').value = data.targetTemp.toFixed(1);
-            }
-            
             if (data.measureInterval) {
                 measureInterval = data.measureInterval;
                 document.getElementById('intervalInput').value = data.measureInterval;
@@ -844,81 +1047,7 @@
             document.getElementById('errorCount').textContent = activeCount;
         }
 
-        window.changeInterval = () => {
-            const val = parseInt(document.getElementById('intervalInput').value);
-            if (val >= 5 && val <= 600) {
-                set(ref(database, 'slm-control/status/setInterval'), val).then(() => {
-                    document.getElementById('intervalMsg').textContent = '✓ Gesendet';
-                    setTimeout(() => document.getElementById('intervalMsg').textContent = '', 2000);
-                });
-            }
-        };
-
-        window.changeTargetTemp = () => {
-            const val = parseFloat(document.getElementById('targetTempInput').value);
-            if (val >= 10 && val <= 40) {
-                set(ref(database, 'slm-control/status/setTargetTemp'), val).then(() => {
-                    document.getElementById('tempMsg').textContent = '✓ Gesendet';
-                    setTimeout(() => document.getElementById('tempMsg').textContent = '', 2000);
-                });
-            }
-        };
-
-        window.changeOverload = () => {
-            const val = parseFloat(document.getElementById('overloadInput').value);
-            set(ref(database, 'slm-control/status/setOverload'), val).then(() => {
-                document.getElementById('overloadMsg').textContent = '✓ Gesendet';
-                setTimeout(() => document.getElementById('overloadMsg').textContent = '', 2000);
-            });
-        };
-
-        window.changeFailed = () => {
-            const val = parseFloat(document.getElementById('failedInput').value);
-            set(ref(database, 'slm-control/status/setFailed'), val).then(() => {
-                document.getElementById('failedMsg').textContent = '✓ Gesendet';
-                setTimeout(() => document.getElementById('failedMsg').textContent = '', 2000);
-            });
-        };
-
-        window.changeTempCrit = () => {
-            const val = parseFloat(document.getElementById('tempCritInput').value);
-            set(ref(database, 'slm-control/status/setTempCrit'), val).then(() => {
-                document.getElementById('tempCritMsg').textContent = '✓ Gesendet';
-                setTimeout(() => document.getElementById('tempCritMsg').textContent = '', 2000);
-            });
-        };
-
-        window.changeHumCrit = () => {
-            const val = parseFloat(document.getElementById('humCritInput').value);
-            set(ref(database, 'slm-control/status/setHumCrit'), val).then(() => {
-                document.getElementById('humCritMsg').textContent = '✓ Gesendet';
-                setTimeout(() => document.getElementById('humCritMsg').textContent = '', 2000);
-            });
-        };
-
         window.refreshErrors = loadErrors;
-
-        window.toggleRealtime = () => {
-            const btn = document.getElementById('realtimeBtn');
-            if (isRealtimeMode) {
-                isRealtimeMode = false;
-                btn.textContent = '🔄 Auto-Update';
-                btn.classList.remove('active');
-                clearInterval(updateInterval);
-                updateInterval = setInterval(loadData, measureInterval * 1000);
-            } else {
-                isRealtimeMode = true;
-                btn.textContent = '⚡ Echtzeit';
-                btn.classList.add('active');
-                clearInterval(updateInterval);
-                onValue(statusRef, (snapshot) => {
-                    if (snapshot.exists()) updateUI(snapshot.val());
-                });
-                onValue(errorsRef, (snapshot) => {
-                    if (snapshot.exists()) displayErrors(snapshot.val());
-                });
-            }
-        };
 
         window.takeScreenshot = () => {
             html2canvas(document.getElementById('dashboard'), { backgroundColor: '#0a0a0a', scale: 2 }).then(canvas => {
@@ -952,7 +1081,8 @@
             initCharts();
             loadData();
             loadErrors();
-            toggleRealtime();
+            document.getElementById('intervalBtn').classList.add('active');
+            updateInterval = setInterval(loadData, 30000);
         };
     </script>
 </body>
