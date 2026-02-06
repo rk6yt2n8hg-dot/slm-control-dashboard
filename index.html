@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SLM-Controll Cloud Dashboard</title>
+    <title>SLM-Controll Cloud Dashboard v2</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -14,10 +14,10 @@
             min-height: 100vh;
             color: #ffffff;
         }
-        .container { max-width: 1400px; margin: 0 auto; }
+        .container { max-width: 1600px; margin: 0 auto; }
         .header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 30px;
             padding: 30px;
             background: linear-gradient(135deg, #3d3d3d 0%, #2d2d2d 100%);
             border-radius: 20px;
@@ -35,36 +35,111 @@
         .status-dot { width: 15px; height: 15px; border-radius: 50%; background: #666; }
         .status-dot.connected { background: #ff1493; box-shadow: 0 0 10px #ff1493; animation: pulse 2s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.7; } }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px; }
-        .stat-card {
-            background: linear-gradient(135deg, #3d3d3d 0%, #2d2d2d 100%);
-            padding: 20px;
-            border-radius: 15px;
-            text-align: center;
-            border: 2px solid #ff1493;
-            position: relative;
+        
+        /* INTERVAL CONTROL */
+        .interval-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #2d2d2d;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
         }
-        .stat-card h3 { color: #ff69b4; font-size: 0.8em; margin-bottom: 10px; text-transform: uppercase; }
-        .stat-card .value { font-size: 2.5em; font-weight: bold; color: #ff1493; }
-        .stat-card .unit { color: #aaa; margin-top: 5px; }
-        .led-panel { background: #3d3d3d; padding: 30px; border-radius: 15px; margin-bottom: 30px; border: 2px solid #ff1493; }
-        .led-panel h3 { color: #ff69b4; font-size: 1.5em; margin-bottom: 25px; text-align: center; }
-        .led-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
-        .led-item { display: flex; align-items: center; gap: 15px; background: #2d2d2d; padding: 15px; border-radius: 10px; }
-        .led { width: 30px; height: 30px; border-radius: 50%; background: #333; border: 3px solid #555; flex-shrink: 0; }
+        .interval-control label { color: #ff69b4; font-weight: bold; }
+        .interval-control input {
+            background: #1a1a1a;
+            border: 2px solid #ff1493;
+            color: white;
+            padding: 8px 15px;
+            border-radius: 5px;
+            width: 100px;
+            font-size: 1em;
+        }
+        .interval-control span { color: #aaa; }
+        
+        /* LED PANEL */
+        .led-panel { background: #3d3d3d; padding: 25px; border-radius: 15px; margin-bottom: 30px; border: 2px solid #ff1493; }
+        .led-panel h3 { color: #ff69b4; font-size: 1.3em; margin-bottom: 20px; text-align: center; }
+        .led-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; }
+        .led-item { display: flex; align-items: center; gap: 12px; background: #2d2d2d; padding: 12px; border-radius: 10px; }
+        .led { width: 25px; height: 25px; border-radius: 50%; background: #333; border: 3px solid #555; flex-shrink: 0; }
         .led.blue.on { background: #339af0; border-color: #339af0; box-shadow: 0 0 20px #339af0; animation: pulse-led 1.5s infinite; }
         .led.yellow.on { background: #ffd700; border-color: #ffd700; box-shadow: 0 0 20px #ffd700; animation: pulse-led 1.5s infinite; }
         .led.green.on { background: #51cf66; border-color: #51cf66; box-shadow: 0 0 20px #51cf66; animation: pulse-led 1.5s infinite; }
-        .led.green.blink { animation: blink-led 1s infinite; }
         .led.red.on { background: #ff4444; border-color: #ff4444; box-shadow: 0 0 20px #ff4444; animation: pulse-led 1.5s infinite; }
         @keyframes pulse-led { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-        @keyframes blink-led { 0%, 49% { background: #51cf66; box-shadow: 0 0 20px #51cf66; } 50%, 100% { background: #333; box-shadow: none; } }
-        .led-label { display: flex; flex-direction: column; gap: 5px; }
-        .led-label strong { color: #ff69b4; font-size: 1.1em; }
-        .led-label span { color: #aaa; font-size: 0.9em; }
-        .chart-container { background: #3d3d3d; padding: 30px; border-radius: 15px; margin-bottom: 30px; border: 2px solid #ff1493; }
-        .chart-title { color: #ff69b4; font-size: 1.5em; margin-bottom: 20px; text-align: center; }
-        .chart-wrapper { position: relative; height: 350px; }
+        .led-label strong { color: #ff69b4; font-size: 1em; }
+        .led-label span { color: #aaa; font-size: 0.85em; }
+        
+        /* CHART SECTIONS - SIDE BY SIDE */
+        .chart-sections {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 1200px) {
+            .chart-sections {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .chart-section {
+            background: #3d3d3d;
+            padding: 25px;
+            border-radius: 15px;
+            border: 2px solid #ff1493;
+        }
+        
+        .chart-section h3 {
+            color: #ff69b4;
+            font-size: 1.5em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        /* STATS CARDS */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-mini {
+            background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid #ff1493;
+        }
+        
+        .stat-mini h4 {
+            color: #ff69b4;
+            font-size: 0.75em;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        
+        .stat-mini .value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #ff1493;
+        }
+        
+        .stat-mini .unit {
+            color: #aaa;
+            font-size: 0.9em;
+            margin-top: 3px;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+        
         button {
             background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
             color: white;
@@ -79,22 +154,22 @@
         button:disabled { background: #555; cursor: not-allowed; opacity: 0.5; }
         button.active { background: linear-gradient(135deg, #51cf66 0%, #40c057 100%); animation: pulse 1.5s infinite; }
         .controls { display: flex; gap: 10px; flex-wrap: wrap; }
-        .footer { text-align: center; padding: 20px; margin-top: 20px; border-top: 2px solid #ff1493; }
+        .footer { text-align: center; padding: 20px; margin-top: 20px; border-top: 2px solid #ff1493; color: #aaa; }
         .footer .creator { color: #ff1493; font-weight: bold; font-size: 1.2em; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>SLM-Controll</h1>
-            <p style="color: #aaa; margin-top: 10px;">Cloud Dashboard - Live von überall 🌍</p>
+            <h1>SLM-Controll v2</h1>
+            <p style="color: #aaa; margin-top: 10px;">Cloud Dashboard mit History (60 Werte) 🌍</p>
         </div>
         
         <div class="connection-panel">
             <div class="connection-status">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <div class="status-dot" id="statusDot"></div>
-                    <span id="statusText">Verbinde mit Firebase...</span>
+                    <span id="statusText">Verbinde...</span>
                 </div>
                 <div class="controls">
                     <button id="realtimeBtn" onclick="toggleRealtime()">🔄 5s Updates</button>
@@ -103,39 +178,61 @@
             </div>
         </div>
         
-        <div class="stats-grid">
-            <div class="stat-card"><h3>Temp Aktuell</h3><div class="value" id="currentTemp">--</div><div class="unit">°C</div></div>
-            <div class="stat-card"><h3>Wunsch-Temp</h3><div class="value" id="targetTemp">--</div><div class="unit">°C</div></div>
-            <div class="stat-card"><h3>Temp Ø</h3><div class="value" id="avgTemp">--</div><div class="unit">°C</div></div>
-            <div class="stat-card"><h3>Temp Min</h3><div class="value" id="minTemp">--</div><div class="unit">°C</div></div>
-            <div class="stat-card"><h3>Temp Max</h3><div class="value" id="maxTemp">--</div><div class="unit">°C</div></div>
-            <div class="stat-card"><h3>LF Aktuell</h3><div class="value" id="currentHumidity">--</div><div class="unit">% rF</div></div>
-            <div class="stat-card"><h3>LF Ø</h3><div class="value" id="avgHumidity">--</div><div class="unit">% rF</div></div>
-            <div class="stat-card"><h3>LF Min</h3><div class="value" id="minHumidity">--</div><div class="unit">% rF</div></div>
-            <div class="stat-card"><h3>LF Max</h3><div class="value" id="maxHumidity">--</div><div class="unit">% rF</div></div>
+        <div class="interval-control">
+            <label>⏱️ Messintervall:</label>
+            <input type="number" id="intervalInput" min="5" max="600" value="30">
+            <span>Sekunden</span>
+            <button onclick="changeInterval()">Ändern</button>
+            <span id="intervalStatus" style="color: #51cf66; margin-left: 10px;"></span>
         </div>
         
         <div class="led-panel">
             <h3>📍 System-Status</h3>
             <div class="led-grid">
                 <div class="led-item"><div class="led blue" id="led1"></div><div class="led-label"><strong>Lüfter</strong><span>Relais 1</span></div></div>
-                <div class="led-item"><div class="led yellow" id="led2"></div><div class="led-label"><strong>Filter prüfen</strong><span id="filterCountdown">Relais 2</span></div></div>
+                <div class="led-item"><div class="led yellow" id="led2"></div><div class="led-label"><strong>Filter</strong><span>Relais 2</span></div></div>
                 <div class="led-item"><div class="led green" id="led3"></div><div class="led-label"><strong id="led3Label">Temp OK</strong><span>Relais 3</span></div></div>
-                <div class="led-item"><div class="led red" id="led4"></div><div class="led-label"><strong>Lüfter Defekt</strong><span>Alarm</span></div></div>
+                <div class="led-item"><div class="led red" id="led4"></div><div class="led-label"><strong>Alarm</strong><span>Relais 4</span></div></div>
             </div>
         </div>
         
-        <div class="chart-container"><div class="chart-title">📈 Luftfeuchtigkeit (Live)</div><div class="chart-wrapper"><canvas id="humidityChart"></canvas></div></div>
-        <div class="chart-container"><div class="chart-title">🌡️ Temperatur (Live)</div><div class="chart-wrapper"><canvas id="temperatureChart"></canvas></div></div>
+        <div class="chart-sections">
+            <!-- TEMPERATUR -->
+            <div class="chart-section">
+                <h3>🌡️ Temperatur</h3>
+                <div class="stats-row">
+                    <div class="stat-mini"><h4>Aktuell</h4><div class="value" id="currentTemp">--</div><div class="unit">°C</div></div>
+                    <div class="stat-mini"><h4>Wunsch</h4><div class="value" id="targetTemp">--</div><div class="unit">°C</div></div>
+                    <div class="stat-mini"><h4>Ø</h4><div class="value" id="avgTemp">--</div><div class="unit">°C</div></div>
+                    <div class="stat-mini"><h4>Min</h4><div class="value" id="minTemp">--</div><div class="unit">°C</div></div>
+                    <div class="stat-mini"><h4>Max</h4><div class="value" id="maxTemp">--</div><div class="unit">°C</div></div>
+                </div>
+                <div class="chart-wrapper"><canvas id="temperatureChart"></canvas></div>
+            </div>
+            
+            <!-- LUFTFEUCHTIGKEIT -->
+            <div class="chart-section">
+                <h3>📈 Luftfeuchtigkeit</h3>
+                <div class="stats-row">
+                    <div class="stat-mini"><h4>Aktuell</h4><div class="value" id="currentHumidity">--</div><div class="unit">%</div></div>
+                    <div class="stat-mini"><h4>Ø</h4><div class="value" id="avgHumidity">--</div><div class="unit">%</div></div>
+                    <div class="stat-mini"><h4>Min</h4><div class="value" id="minHumidity">--</div><div class="unit">%</div></div>
+                    <div class="stat-mini"><h4>Max</h4><div class="value" id="maxHumidity">--</div><div class="unit">%</div></div>
+                </div>
+                <div class="chart-wrapper"><canvas id="humidityChart"></canvas></div>
+            </div>
+        </div>
         
-        <div class="footer"><p>Made by <span class="creator">David Omowanile</span></p><p style="margin-top:10px; font-size:0.9em; color:#aaa;">Powered by Firebase & GitHub Pages</p></div>
+        <div class="footer">
+            <p>Made by <span class="creator">David Omowanile</span></p>
+            <p style="margin-top:10px; font-size:0.9em;">Powered by Firebase & GitHub Pages</p>
+        </div>
     </div>
 
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-        import { getDatabase, ref, onValue, get } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        import { getDatabase, ref, onValue, get, set } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
 
-        // Firebase Config
         const firebaseConfig = {
             apiKey: "AIzaSyC1lP4MWFoeJ8CojZNOFR1azmwv0JH7LoA",
             authDomain: "slm-control.firebaseapp.com",
@@ -150,113 +247,57 @@
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         const statusRef = ref(database, 'slm-control/status');
+        const historyRef = ref(database, 'slm-control/history');
 
         let chart, tempChart;
         let isRealtimeMode = false;
         let updateInterval = null;
         
-        // Chart Daten (maximal 20 Werte)
         let humidityData = [];
         let tempData = [];
         let timeLabels = [];
 
-        // Charts initialisieren
         function initCharts() {
             chart = new Chart(document.getElementById('humidityChart'), {
                 type: 'line',
-                data: { 
-                    labels: [], 
-                    datasets: [{ 
-                        label: 'Luftfeuchtigkeit (%)', 
-                        data: [], 
-                        borderColor: '#ff1493', 
-                        backgroundColor: 'rgba(255,20,147,0.1)', 
-                        borderWidth: 3, 
-                        fill: true, 
-                        tension: 0.4, 
-                        pointRadius: 4,
-                        pointBackgroundColor: '#ff1493'
-                    }] 
-                },
-                options: {
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#ff69b4', font: { size: 14 } } } },
-                    scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            min: 0, 
-                            max: 100, 
-                            title: { display: true, text: 'Luftfeuchtigkeit (%)', color: '#ff69b4', font: { size: 14 } }, 
-                            ticks: { color: '#aaa', font: { size: 12 } }, 
-                            grid: { color: 'rgba(255,20,147,0.1)' } 
-                        },
-                        x: { 
-                            title: { display: true, text: 'Zeit', color: '#ff69b4', font: { size: 14 } }, 
-                            ticks: { color: '#aaa', font: { size: 12 } }, 
-                            grid: { color: 'rgba(255,20,147,0.1)' } 
-                        }
-                    }
-                }
+                data: { labels: [], datasets: [{ label: 'Luftfeuchtigkeit (%)', data: [], borderColor: '#ff1493', backgroundColor: 'rgba(255,20,147,0.1)', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#ff1493' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#ff69b4' } } }, scales: { y: { min: 0, max: 100, ticks: { color: '#aaa' }, grid: { color: 'rgba(255,20,147,0.1)' } }, x: { ticks: { color: '#aaa' }, grid: { color: 'rgba(255,20,147,0.1)' } } } }
             });
             
             tempChart = new Chart(document.getElementById('temperatureChart'), {
                 type: 'line',
-                data: { 
-                    labels: [], 
-                    datasets: [{ 
-                        label: 'Temperatur (°C)', 
-                        data: [], 
-                        borderColor: '#ff9900', 
-                        backgroundColor: 'rgba(255,153,0,0.1)', 
-                        borderWidth: 3, 
-                        fill: true, 
-                        tension: 0.4, 
-                        pointRadius: 4,
-                        pointBackgroundColor: '#ff9900'
-                    }] 
-                },
-                options: {
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#ff69b4', font: { size: 14 } } } },
-                    scales: {
-                        y: { 
-                            beginAtZero: true, 
-                            min: 0, 
-                            max: 50, 
-                            title: { display: true, text: 'Temperatur (°C)', color: '#ff69b4', font: { size: 14 } }, 
-                            ticks: { color: '#aaa', font: { size: 12 } }, 
-                            grid: { color: 'rgba(255,153,0,0.1)' } 
-                        },
-                        x: { 
-                            title: { display: true, text: 'Zeit', color: '#ff69b4', font: { size: 14 } }, 
-                            ticks: { color: '#aaa', font: { size: 12 } }, 
-                            grid: { color: 'rgba(255,153,0,0.1)' } 
-                        }
+                data: { labels: [], datasets: [{ label: 'Temperatur (°C)', data: [], borderColor: '#ff9900', backgroundColor: 'rgba(255,153,0,0.1)', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 3, pointBackgroundColor: '#ff9900' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#ff69b4' } } }, scales: { y: { min: 0, max: 50, ticks: { color: '#aaa' }, grid: { color: 'rgba(255,153,0,0.1)' } }, x: { ticks: { color: '#aaa' }, grid: { color: 'rgba(255,153,0,0.1)' } } } }
+            });
+        }
+
+        function loadHistory() {
+            get(historyRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const history = snapshot.val();
+                    if (history.data && history.data.length > 0) {
+                        console.log(`📥 History geladen: ${history.data.length} Werte`);
+                        
+                        timeLabels = [];
+                        tempData = [];
+                        humidityData = [];
+                        
+                        history.data.forEach(entry => {
+                            const mins = Math.floor(entry.timestamp / 60);
+                            const secs = entry.timestamp % 60;
+                            timeLabels.push(`${mins}:${secs < 10 ? '0' : ''}${secs}`);
+                            tempData.push(entry.temperature);
+                            humidityData.push(entry.humidity);
+                        });
+                        
+                        updateCharts();
+                        updateStats();
                     }
                 }
             });
         }
 
-        // Chart aktualisieren
-        function updateCharts(temp, humidity) {
-            const now = new Date();
-            const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            
-            // Neue Daten hinzufügen
-            timeLabels.push(timeStr);
-            humidityData.push(humidity);
-            tempData.push(temp);
-            
-            // Maximal 20 Werte behalten (scrollender Graph)
-            if (timeLabels.length > 20) {
-                timeLabels.shift();
-                humidityData.shift();
-                tempData.shift();
-            }
-            
-            // Charts updaten
+        function updateCharts() {
             chart.data.labels = timeLabels;
             chart.data.datasets[0].data = humidityData;
             chart.update('none');
@@ -264,135 +305,122 @@
             tempChart.data.labels = timeLabels;
             tempChart.data.datasets[0].data = tempData;
             tempChart.update('none');
+        }
+
+        function addDataPoint(temp, hum) {
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             
-            // Statistiken berechnen
+            timeLabels.push(timeStr);
+            humidityData.push(hum);
+            tempData.push(temp);
+            
+            if (timeLabels.length > 60) {
+                timeLabels.shift();
+                humidityData.shift();
+                tempData.shift();
+            }
+            
+            updateCharts();
             updateStats();
         }
 
-        // Statistiken berechnen
         function updateStats() {
             if (humidityData.length > 0) {
                 const avgHum = humidityData.reduce((a, b) => a + b, 0) / humidityData.length;
-                const minHum = Math.min(...humidityData);
-                const maxHum = Math.max(...humidityData);
-                
                 document.getElementById('avgHumidity').textContent = avgHum.toFixed(1);
-                document.getElementById('minHumidity').textContent = minHum.toFixed(1);
-                document.getElementById('maxHumidity').textContent = maxHum.toFixed(1);
+                document.getElementById('minHumidity').textContent = Math.min(...humidityData).toFixed(1);
+                document.getElementById('maxHumidity').textContent = Math.max(...humidityData).toFixed(1);
             }
             
             if (tempData.length > 0) {
                 const avgTemp = tempData.reduce((a, b) => a + b, 0) / tempData.length;
-                const minTemp = Math.min(...tempData);
-                const maxTemp = Math.max(...tempData);
-                
                 document.getElementById('avgTemp').textContent = avgTemp.toFixed(1);
-                document.getElementById('minTemp').textContent = minTemp.toFixed(1);
-                document.getElementById('maxTemp').textContent = maxTemp.toFixed(1);
+                document.getElementById('minTemp').textContent = Math.min(...tempData).toFixed(1);
+                document.getElementById('maxTemp').textContent = Math.max(...tempData).toFixed(1);
             }
         }
 
-        // UI aktualisieren
         function updateUI(data) {
-            // Status
             const statusDot = document.getElementById('statusDot');
             const statusText = document.getElementById('statusText');
             
             if (data.online) {
                 statusDot.classList.add('connected');
-                statusText.textContent = '🟢 Verbunden - Bridge läuft';
+                statusText.textContent = '🟢 Bridge Online';
             } else {
                 statusDot.classList.remove('connected');
                 statusText.textContent = '🔴 Bridge Offline';
             }
             
-            // Temperaturen
-            if (data.temperature !== null && data.temperature !== undefined) {
+            if (data.temperature !== null) {
                 document.getElementById('currentTemp').textContent = data.temperature.toFixed(1);
+                document.getElementById('currentHumidity').textContent = data.humidity.toFixed(1);
+                addDataPoint(data.temperature, data.humidity);
             }
             
-            if (data.targetTemp !== null && data.targetTemp !== undefined) {
+            if (data.targetTemp !== null) {
                 document.getElementById('targetTemp').textContent = data.targetTemp.toFixed(1);
             }
             
-            // Luftfeuchtigkeit
-            if (data.humidity !== null && data.humidity !== undefined) {
-                document.getElementById('currentHumidity').textContent = data.humidity.toFixed(1);
+            if (data.measureInterval) {
+                document.getElementById('intervalInput').value = data.measureInterval;
             }
             
-            // Charts mit neuen Daten füllen
-            if (data.temperature !== null && data.humidity !== null) {
-                updateCharts(data.temperature, data.humidity);
-            }
-            
-            // LEDs
             document.getElementById('led1').classList.toggle('on', data.relay1);
             document.getElementById('led2').classList.toggle('on', data.relay2);
             document.getElementById('led3').classList.toggle('on', data.relay3);
             document.getElementById('led4').classList.toggle('on', data.relay4);
             
-            // LED3 Label anpassen
-            if (data.relay1) {
-                document.getElementById('led3Label').textContent = 'Lüfter läuft';
-                document.getElementById('led3').classList.add('blink');
-            } else {
-                document.getElementById('led3Label').textContent = 'Temp OK';
-                document.getElementById('led3').classList.remove('blink');
-            }
+            document.getElementById('led3Label').textContent = data.relay1 ? 'Lüfter läuft' : 'Temp OK';
         }
 
-        // Realtime Mode umschalten
+        window.changeInterval = function() {
+            const newInterval = parseInt(document.getElementById('intervalInput').value);
+            
+            if (newInterval >= 5 && newInterval <= 600) {
+                set(ref(database, 'slm-control/status/setInterval'), newInterval)
+                    .then(() => {
+                        document.getElementById('intervalStatus').textContent = '✓ Gesendet!';
+                        setTimeout(() => {
+                            document.getElementById('intervalStatus').textContent = '';
+                        }, 3000);
+                    });
+            } else {
+                alert('Intervall muss zwischen 5 und 600 Sekunden liegen!');
+            }
+        };
+
         window.toggleRealtime = function() {
             const btn = document.getElementById('realtimeBtn');
             
             if (isRealtimeMode) {
-                // Zu Polling wechseln
                 isRealtimeMode = false;
                 btn.textContent = '🔄 5s Updates';
                 btn.classList.remove('active');
-                
                 clearInterval(updateInterval);
                 updateInterval = setInterval(loadData, 5000);
-                
             } else {
-                // Zu Realtime wechseln
                 isRealtimeMode = true;
                 btn.textContent = '⚡ Echtzeit';
                 btn.classList.add('active');
-                
                 clearInterval(updateInterval);
-                
-                // Realtime Listener
                 onValue(statusRef, (snapshot) => {
-                    if (snapshot.exists()) {
-                        updateUI(snapshot.val());
-                    }
+                    if (snapshot.exists()) updateUI(snapshot.val());
                 });
             }
         };
 
-        // Daten einmalig laden
         function loadData() {
             get(statusRef).then((snapshot) => {
-                if (snapshot.exists()) {
-                    updateUI(snapshot.val());
-                } else {
-                    console.log("Keine Daten vorhanden");
-                    document.getElementById('statusText').textContent = '⚠️ Keine Daten in Firebase';
-                }
-            }).catch((error) => {
-                console.error("Firebase Fehler:", error);
-                document.getElementById('statusText').textContent = '❌ Verbindungsfehler';
+                if (snapshot.exists()) updateUI(snapshot.val());
             });
         }
 
-        // Start
         window.onload = function() {
-            console.log('Dashboard gestartet!');
             initCharts();
+            loadHistory();
             loadData();
-            
-            // Polling alle 5 Sekunden
             updateInterval = setInterval(loadData, 5000);
         };
     </script>
