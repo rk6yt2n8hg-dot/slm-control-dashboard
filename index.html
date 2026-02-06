@@ -609,7 +609,7 @@
             <div class="setting-card">
                 <h4>⏱️ Messintervall</h4>
                 <div class="setting-input-group">
-                    <input type="text" id="intervalInput" value="10" onclick="openNumpad('interval', this.value, 'Sekunden', 5, 600)">
+                    <input type="text" id="intervalInput" readonly value="30" onclick="openNumpad('interval', this.value, 'Sekunden', 5, 600)">
                     <label>Sekunden</label>
                 </div>
                 <div class="status-msg" id="intervalMsg"></div>
@@ -770,7 +770,7 @@
         let tempChart, humChart, currentChart;
         let isRealtimeMode = false;
         let updateInterval = null;
-        let measureInterval = 10;
+        let measureInterval = 30;
         
         let tempData = [], humData = [], currentData = [], timeLabels = [], timestamps = [];
         
@@ -851,7 +851,7 @@
             const actions = {
                 'interval': () => {
                     document.getElementById('intervalInput').value = Math.round(val);
-                    set(ref(database, 'slm-control/status/measureInterval'), Math.round(val)).then(() => {
+                    set(ref(database, 'slm-control/status/setInterval'), Math.round(val)).then(() => {
                         document.getElementById('intervalMsg').textContent = '✓ Gesendet';
                         setTimeout(() => document.getElementById('intervalMsg').textContent = '', 2000);
                     });
@@ -1082,7 +1082,7 @@
             loadData();
             loadErrors();
             document.getElementById('intervalBtn').classList.add('active');
-            updateInterval = setInterval(loadData, 10000);
+            updateInterval = setInterval(loadData, 30000);
         };
     </script>
 </body>
