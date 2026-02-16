@@ -976,6 +976,9 @@
                 document.getElementById('realtimeBtn').classList.remove('active');
                 clearInterval(updateInterval);
                 updateInterval = setInterval(loadData, measureInterval * 1000);
+                
+                // Save to Firebase
+                set(ref(database, 'slm-control/ui-state/mode'), 'interval');
             }
         };
 
@@ -991,6 +994,9 @@
                 onValue(errorsRef, (snapshot) => {
                     if (snapshot.exists()) displayErrors(snapshot.val());
                 });
+                
+                // Save to Firebase
+                set(ref(database, 'slm-control/ui-state/mode'), 'realtime');
             }
         };
 
@@ -1181,9 +1187,26 @@
             initCharts();
             loadData();
             loadErrors();
-            document.getElementById('intervalBtn').classList.add('active');
-            updateInterval = setInterval(loadData, 30000);
+            
+            // Load saved UI state from Firebase
+            get(ref(database, 'slm-control/ui-state/mode')).then((snapshot) => {
+                if (snapshot.exists() && snapshot.val() === 'realtime') {
+                    setRealtimeMode();
+                } else {
+                    document.getElementById('intervalBtn').classList.add('active');
+                    updateInterval = setInterval(loadData, 30000);
+                }
+            }).catch(() => {
+                // Default to interval mode if Firebase fails
+                document.getElementById('intervalBtn').classList.add('active');
+                updateInterval = setInterval(loadData, 30000);
+            });
         };
     </script>
+    
+    <!-- Footer -->
+    <div style="text-align: center; padding: 30px; margin-top: 50px; border-top: 2px solid rgba(255, 20, 147, 0.2); color: #666; font-size: 0.95em; letter-spacing: 2px;">
+        Made with 💖 by <span style="color: #ff1493; font-weight: 800;">David Omowanile</span>
+    </div>
 </body>
 </html>
