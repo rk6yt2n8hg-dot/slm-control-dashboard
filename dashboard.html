@@ -863,7 +863,7 @@
             'F007': 'Luftfeuchtigkeit kritisch'
         };
 
-        window.initCharts = function() {
+        function initCharts() {
             currentChart = new Chart(document.getElementById('currentChart'), {
                 type: 'line',
                 data: { labels: [], datasets: [{ data: [], borderColor: '#ff1493', backgroundColor: 'rgba(255, 20, 147, 0.2)', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 0 }] },
@@ -1031,7 +1031,7 @@
             }
         };
 
-        window.addDataPoint = function(temp, hum, current) {
+        function addDataPoint(temp, hum, current) {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('de-DE');
             
@@ -1056,7 +1056,7 @@
             saveChartData();
         }
         
-        window.saveChartData = function() {
+        function saveChartData() {
             const chartDataRef = ref(database, 'slm-control/chart-data');
             set(chartDataRef, {
                 timeLabels: timeLabels,
@@ -1067,7 +1067,7 @@
             });
         }
         
-        window.disableAllControls = function() {
+        function disableAllControls() {
             // Disable all input fields and buttons
             const controls = document.querySelectorAll('input[type="number"], button.secondary, button:not(.nav-tab)');
             controls.forEach(control => {
@@ -1084,7 +1084,7 @@
             });
         }
         
-        window.enableAllControls = function() {
+        function enableAllControls() {
             // Enable all input fields and buttons
             const controls = document.querySelectorAll('input[type="number"], button.secondary, button:not(.nav-tab)');
             controls.forEach(control => {
@@ -1100,136 +1100,52 @@
             });
         }
         
-        window.loadHistoryFromFirebase = function() {
-            // Show loading animation
-            showHistoryLoading();
-            
-            // Trigger history request from Arduino
-            const requestRef = ref(database, 'slm-control/status/requestHistory');
-            set(requestRef, Date.now()).then(() => {
-                console.log('📊 History-Request gesendet...');
-                
-                // Wait for bridge to process and upload
-                setTimeout(() => {
-                    // Load history data from Firebase (stored by bridge)
-                    const historyRef = ref(database, 'slm-control/history');
-                    get(historyRef).then((snapshot) => {
-                        if (snapshot.exists()) {
-                            const historyObj = snapshot.val();
-                            const history = historyObj.data || [];
-                            
-                            if (history.length === 0) {
-                                hideHistoryLoading('⚠️ Keine History-Daten verfügbar');
-                                return;
-                            }
-                            
-                            // Clear current data
-                            timeLabels = [];
-                            tempData = [];
-                            humData = [];
-                            currentData = [];
-                            timestamps = [];
-                            
-                            // Load history into charts (up to 60 points, most recent)
-                            const entries = history.slice(-60);
-                            const now = Date.now();
-                            
-                            entries.forEach((entry, index) => {
-                                // Calculate actual timestamp by going backwards from now
-                                const minutesAgo = (entries.length - index - 1) * (measureInterval / 60);
-                                const actualTimestamp = new Date(now - (minutesAgo * 60 * 1000));
-                                const timeStr = actualTimestamp.toLocaleTimeString('de-DE');
-                                
-                                timeLabels.push(timeStr);
-                                timestamps.push(actualTimestamp);
-                                tempData.push(entry.temp || 0);
-                                humData.push(entry.humidity || 0);
-                                currentData.push(entry.current || 0);
-                            });
-                            
-                            updateCharts();
-                            updateStats();
-                            
-                            // Show success message with time range
-                            const firstTime = timestamps[0].toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                            const lastTime = timestamps[timestamps.length - 1].toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                            const dateStr = timestamps[0].toLocaleDateString('de-DE');
-                            
-                            hideHistoryLoading(`✅ ${entries.length} Werte geladen! (${dateStr} ${firstTime} - ${lastTime})`);
-                        } else {
-                            hideHistoryLoading('⚠️ Keine History in Firebase gefunden');
-                        }
-                    }).catch(error => {
-                        console.error('❌ History laden fehlgeschlagen:', error);
-                        hideHistoryLoading('❌ Fehler beim Laden');
+        function loadHistoryFromFirebase() {
+            // Load history data from Firebase (stored by bridge)
+            const historyRef = ref(database, 'slm-control/history');
+            get(historyRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const historyObj = snapshot.val();
+                    const history = historyObj.data || [];
+                    
+                    if (history.length === 0) {
+                        console.log('⚠️ History ist leer');
+                        return;
+                    }
+                    
+                    // Clear current data
+                    timeLabels = [];
+                    tempData = [];
+                    humData = [];
+                    currentData = [];
+                    timestamps = [];
+                    
+                    // Load history into charts (up to 60 points, most recent)
+                    const entries = history.slice(-60);
+                    entries.forEach(entry => {
+                        // entry format: { temp, humidity, current, timestamp }
+                        const timestamp = new Date(entry.timestamp * 1000 || Date.now());
+                        const timeStr = timestamp.toLocaleTimeString('de-DE');
+                        
+                        timeLabels.push(timeStr);
+                        timestamps.push(timestamp);
+                        tempData.push(entry.temp || 0);
+                        humData.push(entry.humidity || 0);
+                        currentData.push(entry.current || 0);
                     });
-                }, 3000); // Wait 3s for bridge to process
+                    
+                    updateCharts();
+                    updateStats();
+                    console.log(`✅ History geladen: ${entries.length} Werte`);
+                } else {
+                    console.log('⚠️ Keine History in Firebase gefunden');
+                }
+            }).catch(error => {
+                console.error('❌ History laden fehlgeschlagen:', error);
             });
         }
         
-        window.showHistoryLoading = function() {
-            // Create loading overlay if it doesn't exist
-            let overlay = document.getElementById('historyLoadingOverlay');
-            if (!overlay) {
-                overlay = document.createElement('div');
-                overlay.id = 'historyLoadingOverlay';
-                overlay.style.cssText = `
-                    position: fixed;
-                    top: 80px;
-                    right: 20px;
-                    background: linear-gradient(135deg, rgba(255, 20, 147, 0.95) 0%, rgba(255, 105, 180, 0.95) 100%);
-                    backdrop-filter: blur(20px);
-                    border-radius: 15px;
-                    padding: 20px 30px;
-                    color: white;
-                    font-size: 1.1em;
-                    font-weight: 600;
-                    box-shadow: 0 10px 40px rgba(255, 20, 147, 0.6);
-                    z-index: 10000;
-                    display: flex;
-                    align-items: center;
-                    gap: 15px;
-                    animation: slideIn 0.5s ease;
-                `;
-                document.body.appendChild(overlay);
-                
-                // Add keyframes
-                const style = document.createElement('style');
-                style.textContent = `
-                    @keyframes slideIn {
-                        from { transform: translateX(400px); opacity: 0; }
-                        to { transform: translateX(0); opacity: 1; }
-                    }
-                    @keyframes spin {
-                        from { transform: rotate(0deg); }
-                        to { transform: rotate(360deg); }
-                    }
-                `;
-                document.head.appendChild(style);
-            }
-            
-            overlay.innerHTML = `
-                <div style="width: 24px; height: 24px; border: 3px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
-                <span>⏳ Lade History vom Arduino...</span>
-            `;
-            overlay.style.display = 'flex';
-        }
-        
-        window.hideHistoryLoading = function(message) {
-            const overlay = document.getElementById('historyLoadingOverlay');
-            if (overlay) {
-                overlay.innerHTML = `<span>${message}</span>`;
-                setTimeout(() => {
-                    overlay.style.animation = 'slideIn 0.5s ease reverse';
-                    setTimeout(() => {
-                        overlay.style.display = 'none';
-                    }, 500);
-                }, 3000);
-            }
-        }
-        }
-        
-        window.loadChartData = function() {
+        function loadChartData() {
             const chartDataRef = ref(database, 'slm-control/chart-data');
             get(chartDataRef).then((snapshot) => {
                 if (snapshot.exists()) {
@@ -1247,7 +1163,7 @@
             });
         }
 
-        window.updateCharts = function() {
+        function updateCharts() {
             tempChart.data.labels = timeLabels;
             tempChart.data.datasets[0].data = tempData;
             tempChart.update('none');
@@ -1278,7 +1194,7 @@
             currentChart.update('none');
         }
 
-        window.updateStats = function() {
+        function updateStats() {
             if (tempData.length > 0) {
                 document.getElementById('tempMin').textContent = Math.min(...tempData).toFixed(1);
                 document.getElementById('tempAvg').textContent = (tempData.reduce((a,b)=>a+b,0)/tempData.length).toFixed(1);
@@ -1298,14 +1214,12 @@
             }
         }
 
-        window.updateUI = function(data) {
-            console.log('🎨 updateUI aufgerufen mit:', data);
+        function updateUI(data) {
             const statusDot = document.getElementById('statusDot');
             const statusText = document.getElementById('statusText');
             
             // Online/Offline Status + Controls Enable/Disable
             if (data.online) {
-                console.log('✅ Status: ONLINE');
                 statusDot.classList.add('online');
                 statusText.textContent = '🟢 Bridge Online';
                 statusText.style.color = '#10b981';
@@ -1318,7 +1232,6 @@
                 }
                 wasOnline = true;
             } else {
-                console.log('❌ Status: OFFLINE');
                 statusDot.classList.remove('online');
                 statusText.textContent = '🔴 Bridge Offline - Standby Modus';
                 statusText.style.color = '#ef4444';
@@ -1388,7 +1301,7 @@
             document.getElementById('led3Label').textContent = data.relay1 ? 'Lüfter läuft' : 'Temp OK';
         }
         
-        window.updateFilterCountdown = function() {
+        function updateFilterCountdown() {
             if (!currentFilterStartTime || !currentFilterInterval) {
                 document.getElementById('filterCountdown').textContent = '--:--:--';
                 return;
@@ -1413,13 +1326,13 @@
             }
         }
 
-        window.loadErrors = function() {
+        function loadErrors() {
             get(errorsRef).then((snapshot) => {
                 if (snapshot.exists()) displayErrors(snapshot.val());
             });
         }
 
-        window.displayErrors = function(errors) {
+        function displayErrors(errors) {
             const tbody = document.getElementById('errorTableBody');
             tbody.innerHTML = '';
             
@@ -1487,90 +1400,31 @@
             URL.revokeObjectURL(url);
         };
 
-        window.loadData = function() {
-            console.log('📡 loadData() aufgerufen...');
+        function loadData() {
             get(statusRef).then((snapshot) => {
-                console.log('Firebase Response:', snapshot.exists() ? 'Daten vorhanden' : 'Keine Daten');
-                if (snapshot.exists()) {
-                    console.log('Data:', snapshot.val());
-                    updateUI(snapshot.val());
-                } else {
-                    console.log('⚠️ Keine Daten - setze Offline');
-                    updateUI({ 
-                        online: false, 
-                        temperature: null, 
-                        humidity: null, 
-                        current: null 
-                    });
-                }
-            }).catch((error) => {
-                console.error('❌ Firebase load error:', error);
-                updateUI({ 
-                    online: false, 
-                    temperature: null, 
-                    humidity: null, 
-                    current: null 
-                });
+                if (snapshot.exists()) updateUI(snapshot.val());
             });
-        }
-        
-        window.startRealtimeListener = function() {
-            console.log('👂 Starte Realtime Listener...');
-            onValue(statusRef, (snapshot) => {
-                console.log('🔥 Firebase Update empfangen!', snapshot.exists() ? 'Daten da' : 'Keine Daten');
-                if (snapshot.exists()) {
-                    console.log('Update Data:', snapshot.val());
-                    updateUI(snapshot.val());
-                } else {
-                    console.log('⚠️ Firebase leer - Offline');
-                    updateUI({ 
-                        online: false, 
-                        temperature: null, 
-                        humidity: null, 
-                        current: null 
-                    });
-                }
-            }, (error) => {
-                console.error('❌ Realtime Listener Fehler:', error);
-            });
-            console.log('✓ Listener aktiv');
         }
 
         window.onload = () => {
-            console.log('🚀 Dashboard lädt...');
-            
             initCharts();
-            console.log('✓ Charts initialisiert');
-            
-            loadChartData();
-            console.log('✓ Chart Data load gestartet');
-            
+            loadChartData(); // Load saved chart data
             loadData();
-            console.log('✓ Initial Data load gestartet');
-            
             loadErrors();
-            console.log('✓ Errors load gestartet');
-            
-            startRealtimeListener();
-            console.log('✓ Realtime Listener gestartet');
             
             // Load saved UI state from Firebase
             get(ref(database, 'slm-control/ui-state/mode')).then((snapshot) => {
-                console.log('✓ UI State geladen:', snapshot.val());
                 if (snapshot.exists() && snapshot.val() === 'realtime') {
                     setRealtimeMode();
                 } else {
                     document.getElementById('intervalBtn').classList.add('active');
                     updateInterval = setInterval(loadData, 30000);
                 }
-            }).catch((err) => {
-                console.error('❌ UI State Fehler:', err);
+            }).catch(() => {
                 // Default to interval mode if Firebase fails
                 document.getElementById('intervalBtn').classList.add('active');
                 updateInterval = setInterval(loadData, 30000);
             });
-            
-            console.log('✅ Dashboard bereit!');
         };
     </script>
     
