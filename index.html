@@ -1002,6 +1002,26 @@
                 }
             }
             
+            // Wunsch-Temperatur aktualisieren (Multi-Device Sync!)
+            if (data.targetTemp) {
+                document.getElementById('targetTempInput').value = data.targetTemp.toFixed(1);
+                document.getElementById('tempTarget').textContent = data.targetTemp.toFixed(1);
+            }
+            
+            // Alle anderen Threshold-Werte auch aktualisieren
+            if (data.overloadThreshold) {
+                document.getElementById('overloadInput').value = data.overloadThreshold.toFixed(1);
+            }
+            if (data.failedThreshold) {
+                document.getElementById('failedInput').value = data.failedThreshold.toFixed(2);
+            }
+            if (data.tempCritThreshold) {
+                document.getElementById('tempCritInput').value = Math.round(data.tempCritThreshold);
+            }
+            if (data.humCritThreshold) {
+                document.getElementById('humCritInput').value = Math.round(data.humCritThreshold);
+            }
+            
             document.getElementById('led1').classList.toggle('on', data.relay1);
             document.getElementById('led2').classList.toggle('on', data.relay2);
             document.getElementById('led3').classList.toggle('on', data.relay3);
