@@ -184,6 +184,31 @@
             font-weight: 600;
         }
         
+        .current-stats-mini {
+            display: flex;
+            gap: 20px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+        
+        .current-stat-mini {
+            text-align: center;
+        }
+        
+        .current-stat-mini .stat-label {
+            color: #666;
+            font-size: 0.75em;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+            letter-spacing: 1px;
+        }
+        
+        .current-stat-mini .stat-value {
+            color: #ff1493;
+            font-size: 1.3em;
+            font-weight: 700;
+        }
+        
         .current-chart-mini {
             flex: 1;
             min-width: 300px;
@@ -597,6 +622,20 @@
                         <span class="current-value" id="currentValue">0.00</span>
                         <span class="current-unit">A</span>
                     </div>
+                    <div class="current-stats-mini">
+                        <div class="current-stat-mini">
+                            <div class="stat-label">Min</div>
+                            <div class="stat-value" id="currentMinDisplay">--</div>
+                        </div>
+                        <div class="current-stat-mini">
+                            <div class="stat-label">Ø</div>
+                            <div class="stat-value" id="currentAvgDisplay">--</div>
+                        </div>
+                        <div class="current-stat-mini">
+                            <div class="stat-label">Max</div>
+                            <div class="stat-value" id="currentMaxDisplay">--</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="current-chart-mini">
                     <canvas id="currentChart"></canvas>
@@ -1002,6 +1041,12 @@
                 document.getElementById('humMin').textContent = Math.min(...humData).toFixed(1);
                 document.getElementById('humAvg').textContent = (humData.reduce((a,b)=>a+b,0)/humData.length).toFixed(1);
                 document.getElementById('humMax').textContent = Math.max(...humData).toFixed(1);
+            }
+            
+            if (currentData.length > 0) {
+                document.getElementById('currentMinDisplay').textContent = Math.min(...currentData).toFixed(3);
+                document.getElementById('currentAvgDisplay').textContent = (currentData.reduce((a,b)=>a+b,0)/currentData.length).toFixed(3);
+                document.getElementById('currentMaxDisplay').textContent = Math.max(...currentData).toFixed(3);
             }
         }
 
