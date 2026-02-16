@@ -59,22 +59,22 @@
             z-index: 1;
             text-align: center;
             max-width: 900px;
-            padding: 40px;
+            padding: 20px;
         }
         
         /* Main Logo with Rotating Glow */
         .logo-wrapper {
             position: relative;
             display: inline-block;
-            margin-bottom: 50px;
+            margin-bottom: 25px;
         }
         
         .logo-glow {
             position: absolute;
             top: 50%;
             left: 50%;
-            width: 350px;
-            height: 350px;
+            width: 250px;
+            height: 250px;
             background: radial-gradient(circle, rgba(255, 20, 147, 0.4) 0%, transparent 70%);
             transform: translate(-50%, -50%);
             animation: rotate-glow 8s linear infinite;
@@ -89,7 +89,7 @@
         
         .logo {
             position: relative;
-            font-size: 8em;
+            font-size: 5em;
             text-shadow: 0 0 40px rgba(255, 20, 147, 0.9), 0 0 80px rgba(255, 20, 147, 0.5);
             animation: pulse-logo 3s ease-in-out infinite;
         }
@@ -101,15 +101,15 @@
         
         /* Title */
         .title {
-            font-size: 4.5em;
+            font-size: 3em;
             font-weight: 900;
             background: linear-gradient(135deg, #ff1493 0%, #ff69b4 50%, #ff1493 100%);
             background-size: 200% 200%;
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             animation: gradient-shift 4s ease infinite;
-            letter-spacing: -3px;
-            margin-bottom: 20px;
+            letter-spacing: -2px;
+            margin-bottom: 10px;
         }
         
         @keyframes gradient-shift {
@@ -119,12 +119,12 @@
         }
         
         .subtitle {
-            font-size: 1.4em;
+            font-size: 1em;
             color: #888;
-            letter-spacing: 6px;
+            letter-spacing: 4px;
             text-transform: uppercase;
             font-weight: 600;
-            margin-bottom: 70px;
+            margin-bottom: 35px;
             opacity: 0;
             animation: fade-in-up 1s ease 0.5s forwards;
         }
@@ -138,8 +138,8 @@
         .nav-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-            gap: 40px;
-            margin-top: 50px;
+            gap: 25px;
+            margin-top: 20px;
             opacity: 0;
             animation: fade-in-up 1s ease 1s forwards;
         }
@@ -147,9 +147,9 @@
         .nav-card {
             background: linear-gradient(135deg, rgba(26, 26, 26, 0.95) 0%, rgba(15, 15, 15, 0.95) 100%);
             backdrop-filter: blur(30px);
-            border-radius: 30px;
+            border-radius: 25px;
             border: 3px solid rgba(255, 20, 147, 0.3);
-            padding: 60px 45px;
+            padding: 35px 30px;
             cursor: pointer;
             transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             position: relative;
@@ -182,8 +182,8 @@
         }
         
         .nav-card-icon {
-            font-size: 5.5em;
-            margin-bottom: 25px;
+            font-size: 3.5em;
+            margin-bottom: 15px;
             display: block;
             position: relative;
             z-index: 1;
@@ -195,12 +195,12 @@
         }
         
         .nav-card-title {
-            font-size: 2.2em;
+            font-size: 1.8em;
             font-weight: 900;
             background: linear-gradient(135deg, #ff1493 0%, #ff69b4 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
             position: relative;
             z-index: 1;
             letter-spacing: -1px;
@@ -208,16 +208,16 @@
         
         .nav-card-desc {
             color: #aaa;
-            font-size: 1.1em;
-            line-height: 1.7;
+            font-size: 0.95em;
+            line-height: 1.5;
             position: relative;
             z-index: 1;
-            margin-bottom: 25px;
+            margin-bottom: 15px;
         }
         
         .nav-card-features {
-            margin-top: 30px;
-            padding-top: 30px;
+            margin-top: 18px;
+            padding-top: 18px;
             border-top: 2px solid rgba(255, 20, 147, 0.3);
             position: relative;
             z-index: 1;
@@ -225,11 +225,11 @@
         
         .nav-card-feature {
             color: #777;
-            font-size: 0.95em;
-            margin: 10px 0;
+            font-size: 0.85em;
+            margin: 6px 0;
             display: flex;
             align-items: center;
-            gap: 12px;
+            gap: 10px;
             transition: all 0.3s;
         }
         
@@ -244,31 +244,13 @@
             font-size: 1.3em;
         }
         
-        /* Footer */
-        .footer {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            color: #444;
-            font-size: 0.95em;
-            letter-spacing: 3px;
-            z-index: 1;
-            font-weight: 500;
-        }
-        
-        .footer .creator {
-            color: #ff1493;
-            font-weight: 800;
-        }
-        
         /* Responsive */
         @media (max-width: 900px) {
-            .title { font-size: 3em; }
-            .subtitle { font-size: 1em; letter-spacing: 3px; }
-            .logo { font-size: 5em; }
-            .nav-cards { grid-template-columns: 1fr; gap: 30px; }
-            .nav-card { padding: 45px 35px; }
+            .title { font-size: 2.5em; }
+            .subtitle { font-size: 0.9em; letter-spacing: 3px; }
+            .logo { font-size: 4em; }
+            .nav-cards { grid-template-columns: 1fr; gap: 20px; }
+            .nav-card { padding: 30px 25px; }
         }
     </style>
 </head>
@@ -300,7 +282,7 @@
         <!-- Navigation Cards -->
         <div class="nav-cards">
             <!-- Live Dashboard -->
-            <a href="dashboard_WORKING.html" class="nav-card">
+            <a href="dashboard.html" class="nav-card">
                 <span class="nav-card-icon">🎛️</span>
                 <h2 class="nav-card-title">Live Dashboard</h2>
                 <p class="nav-card-desc">
@@ -315,7 +297,7 @@
             </a>
             
             <!-- Analyse Center -->
-            <a href="analyse-center.html" class="nav-card">
+            <a href="analyse.html" class="nav-card">
                 <span class="nav-card-icon">📈</span>
                 <h2 class="nav-card-title">Analyse Center</h2>
                 <p class="nav-card-desc">
@@ -329,11 +311,6 @@
                 </div>
             </a>
         </div>
-    </div>
-    
-    <!-- Footer -->
-    <div class="footer">
-        Made with 💖 by <span class="creator">David Omowanile</span>
     </div>
 </body>
 </html>
