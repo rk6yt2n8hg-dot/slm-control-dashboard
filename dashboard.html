@@ -1020,6 +1020,38 @@
             
             updateCharts();
             updateStats();
+            
+            // Save chart data to Firebase
+            saveChartData();
+        }
+        
+        function saveChartData() {
+            const chartDataRef = ref(database, 'slm-control/chart-data');
+            set(chartDataRef, {
+                timeLabels: timeLabels,
+                tempData: tempData,
+                humData: humData,
+                currentData: currentData,
+                lastUpdate: Date.now()
+            });
+        }
+        
+        function loadChartData() {
+            const chartDataRef = ref(database, 'slm-control/chart-data');
+            get(chartDataRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.val();
+                    // Only load if data is recent (last 24 hours)
+                    if (Date.now() - data.lastUpdate < 24 * 60 * 60 * 1000) {
+                        timeLabels = data.timeLabels || [];
+                        tempData = data.tempData || [];
+                        humData = data.humData || [];
+                        currentData = data.currentData || [];
+                        updateCharts();
+                        updateStats();
+                    }
+                }
+            });
         }
 
         function updateCharts() {
@@ -1185,6 +1217,7 @@
 
         window.onload = () => {
             initCharts();
+            loadChartData(); // Load saved chart data
             loadData();
             loadErrors();
             
