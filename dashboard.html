@@ -863,7 +863,7 @@
             'F007': 'Luftfeuchtigkeit kritisch'
         };
 
-        function initCharts() {
+        window.initCharts = function() {
             currentChart = new Chart(document.getElementById('currentChart'), {
                 type: 'line',
                 data: { labels: [], datasets: [{ data: [], borderColor: '#ff1493', backgroundColor: 'rgba(255, 20, 147, 0.2)', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 0 }] },
@@ -1031,7 +1031,7 @@
             }
         };
 
-        function addDataPoint(temp, hum, current) {
+        window.addDataPoint = function(temp, hum, current) {
             const now = new Date();
             const timeStr = now.toLocaleTimeString('de-DE');
             
@@ -1056,7 +1056,7 @@
             saveChartData();
         }
         
-        function saveChartData() {
+        window.saveChartData = function() {
             const chartDataRef = ref(database, 'slm-control/chart-data');
             set(chartDataRef, {
                 timeLabels: timeLabels,
@@ -1067,7 +1067,7 @@
             });
         }
         
-        function disableAllControls() {
+        window.disableAllControls = function() {
             // Disable all input fields and buttons
             const controls = document.querySelectorAll('input[type="number"], button.secondary, button:not(.nav-tab)');
             controls.forEach(control => {
@@ -1084,7 +1084,7 @@
             });
         }
         
-        function enableAllControls() {
+        window.enableAllControls = function() {
             // Enable all input fields and buttons
             const controls = document.querySelectorAll('input[type="number"], button.secondary, button:not(.nav-tab)');
             controls.forEach(control => {
@@ -1100,7 +1100,7 @@
             });
         }
         
-        function loadHistoryFromFirebase() {
+        window.loadHistoryFromFirebase = function() {
             // Show loading animation
             showHistoryLoading();
             
@@ -1167,7 +1167,7 @@
             });
         }
         
-        function showHistoryLoading() {
+        window.showHistoryLoading = function() {
             // Create loading overlay if it doesn't exist
             let overlay = document.getElementById('historyLoadingOverlay');
             if (!overlay) {
@@ -1215,7 +1215,7 @@
             overlay.style.display = 'flex';
         }
         
-        function hideHistoryLoading(message) {
+        window.hideHistoryLoading = function(message) {
             const overlay = document.getElementById('historyLoadingOverlay');
             if (overlay) {
                 overlay.innerHTML = `<span>${message}</span>`;
@@ -1229,7 +1229,7 @@
         }
         }
         
-        function loadChartData() {
+        window.loadChartData = function() {
             const chartDataRef = ref(database, 'slm-control/chart-data');
             get(chartDataRef).then((snapshot) => {
                 if (snapshot.exists()) {
@@ -1247,7 +1247,7 @@
             });
         }
 
-        function updateCharts() {
+        window.updateCharts = function() {
             tempChart.data.labels = timeLabels;
             tempChart.data.datasets[0].data = tempData;
             tempChart.update('none');
@@ -1278,7 +1278,7 @@
             currentChart.update('none');
         }
 
-        function updateStats() {
+        window.updateStats = function() {
             if (tempData.length > 0) {
                 document.getElementById('tempMin').textContent = Math.min(...tempData).toFixed(1);
                 document.getElementById('tempAvg').textContent = (tempData.reduce((a,b)=>a+b,0)/tempData.length).toFixed(1);
@@ -1298,12 +1298,14 @@
             }
         }
 
-        function updateUI(data) {
+        window.updateUI = function(data) {
+            console.log('🎨 updateUI aufgerufen mit:', data);
             const statusDot = document.getElementById('statusDot');
             const statusText = document.getElementById('statusText');
             
             // Online/Offline Status + Controls Enable/Disable
             if (data.online) {
+                console.log('✅ Status: ONLINE');
                 statusDot.classList.add('online');
                 statusText.textContent = '🟢 Bridge Online';
                 statusText.style.color = '#10b981';
@@ -1316,6 +1318,7 @@
                 }
                 wasOnline = true;
             } else {
+                console.log('❌ Status: OFFLINE');
                 statusDot.classList.remove('online');
                 statusText.textContent = '🔴 Bridge Offline - Standby Modus';
                 statusText.style.color = '#ef4444';
@@ -1385,7 +1388,7 @@
             document.getElementById('led3Label').textContent = data.relay1 ? 'Lüfter läuft' : 'Temp OK';
         }
         
-        function updateFilterCountdown() {
+        window.updateFilterCountdown = function() {
             if (!currentFilterStartTime || !currentFilterInterval) {
                 document.getElementById('filterCountdown').textContent = '--:--:--';
                 return;
@@ -1410,13 +1413,13 @@
             }
         }
 
-        function loadErrors() {
+        window.loadErrors = function() {
             get(errorsRef).then((snapshot) => {
                 if (snapshot.exists()) displayErrors(snapshot.val());
             });
         }
 
-        function displayErrors(errors) {
+        window.displayErrors = function(errors) {
             const tbody = document.getElementById('errorTableBody');
             tbody.innerHTML = '';
             
@@ -1484,31 +1487,90 @@
             URL.revokeObjectURL(url);
         };
 
-        function loadData() {
+        window.loadData = function() {
+            console.log('📡 loadData() aufgerufen...');
             get(statusRef).then((snapshot) => {
-                if (snapshot.exists()) updateUI(snapshot.val());
+                console.log('Firebase Response:', snapshot.exists() ? 'Daten vorhanden' : 'Keine Daten');
+                if (snapshot.exists()) {
+                    console.log('Data:', snapshot.val());
+                    updateUI(snapshot.val());
+                } else {
+                    console.log('⚠️ Keine Daten - setze Offline');
+                    updateUI({ 
+                        online: false, 
+                        temperature: null, 
+                        humidity: null, 
+                        current: null 
+                    });
+                }
+            }).catch((error) => {
+                console.error('❌ Firebase load error:', error);
+                updateUI({ 
+                    online: false, 
+                    temperature: null, 
+                    humidity: null, 
+                    current: null 
+                });
             });
+        }
+        
+        window.startRealtimeListener = function() {
+            console.log('👂 Starte Realtime Listener...');
+            onValue(statusRef, (snapshot) => {
+                console.log('🔥 Firebase Update empfangen!', snapshot.exists() ? 'Daten da' : 'Keine Daten');
+                if (snapshot.exists()) {
+                    console.log('Update Data:', snapshot.val());
+                    updateUI(snapshot.val());
+                } else {
+                    console.log('⚠️ Firebase leer - Offline');
+                    updateUI({ 
+                        online: false, 
+                        temperature: null, 
+                        humidity: null, 
+                        current: null 
+                    });
+                }
+            }, (error) => {
+                console.error('❌ Realtime Listener Fehler:', error);
+            });
+            console.log('✓ Listener aktiv');
         }
 
         window.onload = () => {
+            console.log('🚀 Dashboard lädt...');
+            
             initCharts();
-            loadChartData(); // Load saved chart data
+            console.log('✓ Charts initialisiert');
+            
+            loadChartData();
+            console.log('✓ Chart Data load gestartet');
+            
             loadData();
+            console.log('✓ Initial Data load gestartet');
+            
             loadErrors();
+            console.log('✓ Errors load gestartet');
+            
+            startRealtimeListener();
+            console.log('✓ Realtime Listener gestartet');
             
             // Load saved UI state from Firebase
             get(ref(database, 'slm-control/ui-state/mode')).then((snapshot) => {
+                console.log('✓ UI State geladen:', snapshot.val());
                 if (snapshot.exists() && snapshot.val() === 'realtime') {
                     setRealtimeMode();
                 } else {
                     document.getElementById('intervalBtn').classList.add('active');
                     updateInterval = setInterval(loadData, 30000);
                 }
-            }).catch(() => {
+            }).catch((err) => {
+                console.error('❌ UI State Fehler:', err);
                 // Default to interval mode if Firebase fails
                 document.getElementById('intervalBtn').classList.add('active');
                 updateInterval = setInterval(loadData, 30000);
             });
+            
+            console.log('✅ Dashboard bereit!');
         };
     </script>
     
