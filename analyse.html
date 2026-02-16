@@ -601,6 +601,65 @@
         .insight-item.warning { border-left-color: #fbbf24; }
         .insight-item.success { border-left-color: #10b981; }
         
+        /* FILE TABS */
+        .file-tabs-container {
+            margin: 30px 0;
+            padding: 25px;
+            background: rgba(26, 26, 26, 0.6);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 20, 147, 0.3);
+        }
+        
+        .file-tabs-title {
+            color: #ff69b4;
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 15px;
+        }
+        
+        .file-tabs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .file-tab {
+            padding: 12px 20px;
+            background: rgba(255, 20, 147, 0.1);
+            border: 2px solid rgba(255, 20, 147, 0.3);
+            border-radius: 10px;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95em;
+        }
+        
+        .file-tab.active {
+            background: rgba(255, 20, 147, 0.3);
+            border-color: #ff1493;
+            color: #ff1493;
+            font-weight: 600;
+        }
+        
+        .file-tab:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 20, 147, 0.3);
+        }
+        
+        .file-tab-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        
+        .file-tab-indicator {
+            font-weight: bold;
+        }
+        
         /* EMPTY STATE */
         .empty-state {
             text-align: center;
@@ -793,6 +852,22 @@
         // Data Storage
         let analysisData = {};
         let pendingCSV = null;
+        
+        // Global chart instances for multi-dataset
+        let tempChart = null;
+        let humChart = null;
+        let currentChart = null;
+        let chartDatasets = {
+            temp: [],
+            hum: [],
+            current: []
+        };
+        
+        // Color scheme for datasets (up to 10 files)
+        let datasetColors = [
+            '#ff1493', '#00d4ff', '#10b981', '#fbbf24', '#8b5cf6', 
+            '#ef4444', '#06b6d4', '#84cc16', '#f97316', '#ec4899'
+        ];
         
         // Settings with defaults
         let settings = JSON.parse(localStorage.getItem('slm-analysis-settings')) || {
@@ -994,15 +1069,28 @@
                     return;
                 }
                 if (!analysisData[tabName]) {
-                    analysisData[tabName] = { files: [], data: [] };
+                    analysisData[tabName] = { files: [], data: [], datasets: [] };
                 }
             } else {
                 tabName = selectedTab;
+                // Initialize datasets array if it doesn't exist (backward compatibility)
+                if (!analysisData[tabName].datasets) {
+                    analysisData[tabName].datasets = [];
+                }
             }
 
+            // Add as new dataset (not append!)
             analysisData[tabName].files.push(pendingCSV.name);
-            analysisData[tabName].data.push(...pendingCSV.data);
-            analysisData[tabName].data.sort((a, b) => new Date(a.time) - new Date(b.time));
+            analysisData[tabName].datasets.push({
+                fileName: pendingCSV.name,
+                data: pendingCSV.data,
+                visible: true
+            });
+            
+            // Combine all datasets for stats
+            analysisData[tabName].data = analysisData[tabName].datasets
+                .flatMap(ds => ds.data)
+                .sort((a, b) => new Date(a.time) - new Date(b.time));
 
             saveData();
             closeImportModal();
@@ -1144,6 +1232,11 @@
                     </div>
                 </div>
 
+                <div class="file-tabs-container">
+                    <div class="file-tabs-title">📁 Dateien (Click zum An/Ausschalten):</div>
+                    <div id="fileTabs" class="file-tabs"></div>
+                </div>
+
                 <div class="insights-panel">
                     <div class="insights-title">🔍 Automatische Erkenntnisse</div>
                     ${generateInsights(tabData.data)}
@@ -1151,85 +1244,220 @@
             `;
 
             // Render charts
-            setTimeout(() => renderCharts(tabData.data), 100);
+            setTimeout(() => renderCharts(tabData), 100);
         }
 
-        function renderCharts(data) {
-            const labels = data.map(d => new Date(d.time).toLocaleString('de-DE'));
-            const temps = data.map(d => d.temperature);
-            const hums = data.map(d => d.humidity);
-            const currents = data.map(d => d.current);
-
-            new Chart(document.getElementById('chartTemp'), {
+        function renderCharts(tabData) {
+            const datasets = tabData.datasets || [{ fileName: 'Combined Data', data: tabData.data, visible: true }];
+            
+            // Prepare datasets for Chart.js
+            const tempDatasets = [];
+            const humDatasets = [];
+            const currentDatasets = [];
+            
+            datasets.forEach((dataset, index) => {
+                const color = datasetColors[index % datasetColors.length];
+                
+                // Relative indices (0, 1, 2, 3... for measurements)
+                const dataPoints = dataset.data.length;
+                const temps = dataset.data.map(d => d.temperature);
+                const hums = dataset.data.map(d => d.humidity);
+                const currents = dataset.data.map(d => d.current);
+                
+                tempDatasets.push({
+                    label: dataset.fileName,
+                    data: temps.map((y, x) => ({ x, y })),
+                    borderColor: color,
+                    backgroundColor: color + '20',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    hidden: !dataset.visible,
+                    pointRadius: 0
+                });
+                
+                humDatasets.push({
+                    label: dataset.fileName,
+                    data: hums.map((y, x) => ({ x, y })),
+                    borderColor: color,
+                    backgroundColor: color + '20',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    hidden: !dataset.visible,
+                    pointRadius: 0
+                });
+                
+                currentDatasets.push({
+                    label: dataset.fileName,
+                    data: currents.map((y, x) => ({ x, y })),
+                    borderColor: color,
+                    backgroundColor: color + '20',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    hidden: !dataset.visible,
+                    pointRadius: 0
+                });
+            });
+            
+            // Destroy old charts if they exist
+            if (tempChart) tempChart.destroy();
+            if (humChart) humChart.destroy();
+            if (currentChart) currentChart.destroy();
+            
+            // Create temperature chart
+            tempChart = new Chart(document.getElementById('chartTemp'), {
                 type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Temperatur',
-                        data: temps,
-                        borderColor: '#ff1493',
-                        backgroundColor: 'rgba(255, 20, 147, 0.1)',
-                        tension: 0.4
-                    }]
-                },
+                data: { datasets: tempDatasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#888' } } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (ctx) => `Messung #${ctx[0].parsed.x}`,
+                                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}°C`
+                            }
+                        }
+                    },
                     scales: {
-                        y: { min: 0, max: 50, ticks: { color: '#666' }, grid: { color: '#2a2a2a' } },
-                        x: { ticks: { color: '#666' }, grid: { color: '#2a2a2a' } }
+                        y: { 
+                            min: 0, 
+                            max: 50, 
+                            title: { display: true, text: 'Temperatur (°C)', color: '#888' },
+                            ticks: { color: '#666' }, 
+                            grid: { color: '#2a2a2a' } 
+                        },
+                        x: { 
+                            type: 'linear',
+                            title: { display: true, text: 'Messung Nr.', color: '#888' },
+                            ticks: { color: '#666' }, 
+                            grid: { color: '#2a2a2a' } 
+                        }
                     }
                 }
             });
-
-            new Chart(document.getElementById('chartHum'), {
+            
+            // Create humidity chart
+            humChart = new Chart(document.getElementById('chartHum'), {
                 type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Luftfeuchtigkeit',
-                        data: hums,
-                        borderColor: '#ff69b4',
-                        backgroundColor: 'rgba(255, 105, 180, 0.1)',
-                        tension: 0.4
-                    }]
-                },
+                data: { datasets: humDatasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#888' } } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (ctx) => `Messung #${ctx[0].parsed.x}`,
+                                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`
+                            }
+                        }
+                    },
                     scales: {
-                        y: { min: 0, max: 100, ticks: { color: '#666' }, grid: { color: '#2a2a2a' } },
-                        x: { ticks: { color: '#666' }, grid: { color: '#2a2a2a' } }
+                        y: { 
+                            min: 0, 
+                            max: 100, 
+                            title: { display: true, text: 'Luftfeuchtigkeit (%)', color: '#888' },
+                            ticks: { color: '#666' }, 
+                            grid: { color: '#2a2a2a' } 
+                        },
+                        x: { 
+                            type: 'linear',
+                            title: { display: true, text: 'Messung Nr.', color: '#888' },
+                            ticks: { color: '#666' }, 
+                            grid: { color: '#2a2a2a' } 
+                        }
                     }
                 }
             });
-
-            new Chart(document.getElementById('chartCurrent'), {
+            
+            // Create current chart
+            currentChart = new Chart(document.getElementById('chartCurrent'), {
                 type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Strom',
-                        data: currents,
-                        borderColor: '#10b981',
-                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                        tension: 0.4
-                    }]
-                },
+                data: { datasets: currentDatasets },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: { legend: { labels: { color: '#888' } } },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (ctx) => `Messung #${ctx[0].parsed.x}`,
+                                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(3)}A`
+                            }
+                        }
+                    },
                     scales: {
-                        y: { min: 0, max: 5, ticks: { color: '#666' }, grid: { color: '#2a2a2a' } },
-                        x: { ticks: { color: '#666' }, grid: { color: '#2a2a2a' } }
+                        y: { 
+                            min: 0, 
+                            suggestedMax: 5,
+                            title: { display: true, text: 'Strom (A)', color: '#888' },
+                            ticks: { color: '#666' }, 
+                            grid: { color: '#2a2a2a' } 
+                        },
+                        x: { 
+                            type: 'linear',
+                            title: { display: true, text: 'Messung Nr.', color: '#888' },
+                            ticks: { color: '#666' }, 
+                            grid: { color: '#2a2a2a' } 
+                        }
                     }
                 }
             });
+            
+            // Render file tabs
+            renderFileTabs(datasets);
         }
 
+        function renderFileTabs(datasets) {
+            const container = document.getElementById('fileTabs');
+            if (!container) return;
+            
+            container.innerHTML = datasets.map((dataset, index) => {
+                const color = datasetColors[index % datasetColors.length];
+                const active = dataset.visible ? 'active' : '';
+                const indicator = dataset.visible ? '✓' : '☐';
+                
+                return `
+                    <button class="file-tab ${active}" onclick="toggleDataset(${index})">
+                        <span class="file-tab-color" style="background: ${color};"></span>
+                        <span>${dataset.fileName}</span>
+                        <span class="file-tab-indicator">${indicator}</span>
+                    </button>
+                `;
+            }).join('');
+        }
+        
+        function toggleDataset(index) {
+            const currentTab = document.querySelector('.tab-detail-title').textContent.replace('📂 ', '');
+            const tabData = analysisData[currentTab];
+            
+            if (!tabData.datasets || !tabData.datasets[index]) return;
+            
+            // Toggle visibility
+            tabData.datasets[index].visible = !tabData.datasets[index].visible;
+            
+            // Update charts
+            if (tempChart && tempChart.data.datasets[index]) {
+                tempChart.data.datasets[index].hidden = !tabData.datasets[index].visible;
+                tempChart.update();
+            }
+            if (humChart && humChart.data.datasets[index]) {
+                humChart.data.datasets[index].hidden = !tabData.datasets[index].visible;
+                humChart.update();
+            }
+            if (currentChart && currentChart.data.datasets[index]) {
+                currentChart.data.datasets[index].hidden = !tabData.datasets[index].visible;
+                currentChart.update();
+            }
+            
+            // Update tabs UI
+            renderFileTabs(tabData.datasets);
+            
+            // Save to Firebase
+            saveData();
+        }
+        
         function generateInsights(data) {
             const temps = data.map(d => d.temperature);
             const hums = data.map(d => d.humidity);
