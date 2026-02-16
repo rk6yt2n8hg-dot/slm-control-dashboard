@@ -835,6 +835,7 @@
 
         let tempChart, humChart, currentChart;
         let isRealtimeMode = false;
+        let wasOnline = false; // Track if we were online before
         let updateInterval = null;
         let measureInterval = 30;
         
@@ -1054,6 +1055,84 @@
             });
         }
         
+        function disableAllControls() {
+            // Disable all input fields and buttons
+            const controls = document.querySelectorAll('input[type="number"], button.secondary, button:not(.nav-tab)');
+            controls.forEach(control => {
+                if (!control.classList.contains('nav-tab')) {
+                    control.disabled = true;
+                    control.style.opacity = '0.5';
+                    control.style.cursor = 'not-allowed';
+                }
+            });
+            
+            // Show standby overlay on inputs
+            document.querySelectorAll('.setting-card').forEach(card => {
+                card.style.opacity = '0.6';
+            });
+        }
+        
+        function enableAllControls() {
+            // Enable all input fields and buttons
+            const controls = document.querySelectorAll('input[type="number"], button.secondary, button:not(.nav-tab)');
+            controls.forEach(control => {
+                if (!control.classList.contains('nav-tab')) {
+                    control.disabled = false;
+                    control.style.opacity = '1';
+                    control.style.cursor = 'pointer';
+                }
+            });
+            
+            document.querySelectorAll('.setting-card').forEach(card => {
+                card.style.opacity = '1';
+            });
+        }
+        
+        function loadHistoryFromFirebase() {
+            // Load history data from Firebase (stored by bridge)
+            const historyRef = ref(database, 'slm-control/history');
+            get(historyRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    const historyObj = snapshot.val();
+                    const history = historyObj.data || [];
+                    
+                    if (history.length === 0) {
+                        console.log('⚠️ History ist leer');
+                        return;
+                    }
+                    
+                    // Clear current data
+                    timeLabels = [];
+                    tempData = [];
+                    humData = [];
+                    currentData = [];
+                    timestamps = [];
+                    
+                    // Load history into charts (up to 60 points, most recent)
+                    const entries = history.slice(-60);
+                    entries.forEach(entry => {
+                        // entry format: { temp, humidity, current, timestamp }
+                        const timestamp = new Date(entry.timestamp * 1000 || Date.now());
+                        const timeStr = timestamp.toLocaleTimeString('de-DE');
+                        
+                        timeLabels.push(timeStr);
+                        timestamps.push(timestamp);
+                        tempData.push(entry.temp || 0);
+                        humData.push(entry.humidity || 0);
+                        currentData.push(entry.current || 0);
+                    });
+                    
+                    updateCharts();
+                    updateStats();
+                    console.log(`✅ History geladen: ${entries.length} Werte`);
+                } else {
+                    console.log('⚠️ Keine History in Firebase gefunden');
+                }
+            }).catch(error => {
+                console.error('❌ History laden fehlgeschlagen:', error);
+            });
+        }
+        
         function loadChartData() {
             const chartDataRef = ref(database, 'slm-control/chart-data');
             get(chartDataRef).then((snapshot) => {
@@ -1110,19 +1189,36 @@
             const statusDot = document.getElementById('statusDot');
             const statusText = document.getElementById('statusText');
             
+            // Online/Offline Status + Controls Enable/Disable
             if (data.online) {
                 statusDot.classList.add('online');
                 statusText.textContent = '🟢 Bridge Online';
+                statusText.style.color = '#10b981';
+                enableAllControls();
+                
+                // Load history when coming online
+                if (!wasOnline) {
+                    console.log('📊 Bridge online - lade History...');
+                    loadHistoryFromFirebase();
+                }
+                wasOnline = true;
             } else {
                 statusDot.classList.remove('online');
-                statusText.textContent = '🔴 Bridge Offline';
+                statusText.textContent = '🔴 Bridge Offline - Standby Modus';
+                statusText.style.color = '#ef4444';
+                disableAllControls();
+                wasOnline = false;
             }
             
             if (data.temperature !== null) {
                 document.getElementById('tempCurrent').textContent = data.temperature.toFixed(1);
                 document.getElementById('humCurrent').textContent = data.humidity.toFixed(1);
                 document.getElementById('currentValue').textContent = data.current ? data.current.toFixed(3) : '0.000';
-                addDataPoint(data.temperature, data.humidity, data.current || 0);
+                
+                // Only add to chart if online (don't update with stale data)
+                if (data.online) {
+                    addDataPoint(data.temperature, data.humidity, data.current || 0);
+                }
             }
             
             if (data.measureInterval) {
