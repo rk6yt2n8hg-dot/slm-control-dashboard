@@ -15,8 +15,16 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            overflow: hidden;
+            overflow-y: auto;
             position: relative;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                display: block;
+                min-height: auto;
+                padding: 20px 0;
+            }
         }
         
         /* Animated Background Particles */
@@ -311,6 +319,11 @@
                 </div>
             </a>
         </div>
+    </div>
+    
+    <!-- Footer -->
+    <div style="text-align: center; padding: 40px 20px; color: #666; font-size: 0.95em; letter-spacing: 2px; margin-top: 50px;">
+        Made with 💖 by <span style="color: #ff1493; font-weight: 800;">David Omowanile</span>
     </div>
 </body>
 </html>
