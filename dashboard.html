@@ -718,10 +718,14 @@
             </div>
             
             <div class="setting-card">
-                <h4>⏰ Filter-Intervall</h4>
+                <h4>⏰ Filter Status</h4>
                 <div class="setting-input-group">
                     <input type="text" id="filterIntervalInput" readonly value="1.0" onclick="openNumpad('filterInterval', this.value, 'Stunden', 0.1, 24)">
-                    <label>Stunden</label>
+                    <label>Intervall (Stunden)</label>
+                </div>
+                <div style="margin-top: 15px; padding: 15px; background: rgba(255, 20, 147, 0.1); border-radius: 10px; border-left: 4px solid #ff1493;">
+                    <div style="font-size: 0.9em; color: #aaa; margin-bottom: 5px;">Lüfter Laufzeit:</div>
+                    <div id="filterCountdown" style="font-size: 1.8em; font-weight: bold; color: #ff1493;">--:--:--</div>
                 </div>
                 <div class="status-msg" id="filterIntervalMsg"></div>
             </div>
@@ -836,6 +840,9 @@
         let tempChart, humChart, currentChart;
         let isRealtimeMode = false;
         let wasOnline = false; // Track if we were online before
+        let filterCountdownTimer = null; // Timer for countdown updates
+        let currentFilterStartTime = null;
+        let currentFilterInterval = 1.0;
         let updateInterval = null;
         let measureInterval = 30;
         
@@ -873,7 +880,12 @@
                         }
                     }, 
                     scales: { 
-                        y: { min: 0, max: 5, ticks: { color: '#666' }, grid: { color: '#2a2a2a' } }, 
+                        y: { 
+                            min: 0, 
+                            suggestedMax: 5,
+                            ticks: { color: '#666' }, 
+                            grid: { color: '#2a2a2a' } 
+                        }, 
                         x: { display: false } 
                     } 
                 }
@@ -1162,6 +1174,23 @@
             
             currentChart.data.labels = timeLabels;
             currentChart.data.datasets[0].data = currentData;
+            
+            // Dynamic Y-axis for current based on max value
+            if (currentData.length > 0) {
+                const maxCurrent = Math.max(...currentData);
+                // Round up to next nice number (1, 2, 3, 4, 5, 6, 8, 10)
+                let suggestedMax = 5;
+                if (maxCurrent > 5) suggestedMax = 10;
+                else if (maxCurrent > 4) suggestedMax = 6;
+                else if (maxCurrent > 3) suggestedMax = 4;
+                else if (maxCurrent > 2) suggestedMax = 3;
+                else if (maxCurrent > 1) suggestedMax = 2;
+                else if (maxCurrent > 0.5) suggestedMax = 1;
+                else suggestedMax = 1;
+                
+                currentChart.options.scales.y.suggestedMax = suggestedMax;
+            }
+            
             currentChart.update('none');
         }
 
@@ -1251,7 +1280,17 @@
                 document.getElementById('humCritInput').value = Math.round(data.humCritThreshold);
             }
             if (data.filterInterval) {
+                currentFilterInterval = data.filterInterval;
                 document.getElementById('filterIntervalInput').value = data.filterInterval.toFixed(1);
+            }
+            if (data.filterStartTime) {
+                currentFilterStartTime = data.filterStartTime;
+            }
+            
+            // Start countdown timer
+            updateFilterCountdown();
+            if (!filterCountdownTimer) {
+                filterCountdownTimer = setInterval(updateFilterCountdown, 1000);
             }
             
             document.getElementById('led1').classList.toggle('on', data.relay1);
@@ -1260,6 +1299,31 @@
             document.getElementById('led4').classList.toggle('on', data.relay4);
             
             document.getElementById('led3Label').textContent = data.relay1 ? 'Lüfter läuft' : 'Temp OK';
+        }
+        
+        function updateFilterCountdown() {
+            if (!currentFilterStartTime || !currentFilterInterval) {
+                document.getElementById('filterCountdown').textContent = '--:--:--';
+                return;
+            }
+            
+            const now = Date.now();
+            const elapsed = now - currentFilterStartTime;
+            const intervalMs = currentFilterInterval * 3600000; // hours to ms
+            const remaining = intervalMs - elapsed;
+            
+            if (remaining > 0) {
+                const hours = Math.floor(remaining / 3600000);
+                const mins = Math.floor((remaining % 3600000) / 60000);
+                const secs = Math.floor((remaining % 60000) / 1000);
+                
+                document.getElementById('filterCountdown').textContent = 
+                    `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+                document.getElementById('filterCountdown').style.color = '#10b981';
+            } else {
+                document.getElementById('filterCountdown').textContent = 'FILTER PRÜFEN!';
+                document.getElementById('filterCountdown').style.color = '#ef4444';
+            }
         }
 
         function loadErrors() {
