@@ -1486,15 +1486,51 @@
 
         function loadData() {
             get(statusRef).then((snapshot) => {
-                if (snapshot.exists()) updateUI(snapshot.val());
+                if (snapshot.exists()) {
+                    updateUI(snapshot.val());
+                } else {
+                    // No data in Firebase - show offline state
+                    updateUI({ 
+                        online: false, 
+                        temperature: null, 
+                        humidity: null, 
+                        current: null 
+                    });
+                }
+            }).catch((error) => {
+                console.error('Firebase load error:', error);
+                // Show offline state on error
+                updateUI({ 
+                    online: false, 
+                    temperature: null, 
+                    humidity: null, 
+                    current: null 
+                });
+            });
+        }
+        
+        function startRealtimeListener() {
+            // Listen for real-time updates
+            onValue(statusRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    updateUI(snapshot.val());
+                } else {
+                    updateUI({ 
+                        online: false, 
+                        temperature: null, 
+                        humidity: null, 
+                        current: null 
+                    });
+                }
             });
         }
 
         window.onload = () => {
             initCharts();
             loadChartData(); // Load saved chart data
-            loadData();
+            loadData(); // Initial load
             loadErrors();
+            startRealtimeListener(); // Start listening for real-time updates
             
             // Load saved UI state from Firebase
             get(ref(database, 'slm-control/ui-state/mode')).then((snapshot) => {
