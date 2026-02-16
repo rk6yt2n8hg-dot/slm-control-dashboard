@@ -8,6 +8,33 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <!-- Firebase SDK -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getDatabase, ref, set, get, remove, onValue } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js';
+        
+        const firebaseConfig = {
+            apiKey: "AIzaSyC1lP4MWFoeJ8CojZNOFR1azmwv0JH7LoA",
+            authDomain: "slm-control.firebaseapp.com",
+            databaseURL: "https://slm-control-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "slm-control",
+            storageBucket: "slm-control.firebasestorage.app",
+            messagingSenderId: "768088564680",
+            appId: "1:768088564680:web:7657008a3432a5c08c56fd"
+        };
+        
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        
+        // Make Firebase available globally
+        window.firebaseDB = database;
+        window.firebaseRef = ref;
+        window.firebaseSet = set;
+        window.firebaseGet = get;
+        window.firebaseRemove = remove;
+        window.firebaseOnValue = onValue;
+    </script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -746,7 +773,7 @@
 
     <script>
         // Data Storage
-        let analysisData = JSON.parse(localStorage.getItem('slm-analysis-data')) || {};
+        let analysisData = {};
         let pendingCSV = null;
         
         // Settings with defaults
@@ -781,7 +808,8 @@
             settings.currentNormal = parseFloat(document.getElementById('currentNormal').value);
             settings.currentHigh = parseFloat(document.getElementById('currentHigh').value);
             
-            localStorage.setItem('slm-analysis-settings', JSON.stringify(settings));
+            const settingsRef = firebaseRef(firebaseDB, 'slm-analysis/settings');
+            firebaseSet(settingsRef, settings);
             document.getElementById('settingsModal').classList.remove('active');
             
             // Refresh if in tab detail view
@@ -809,8 +837,30 @@
 
         // Initialize
         function init() {
-            renderOverview();
-            renderTabs();
+            loadFromFirebase();
+        }
+
+        function loadFromFirebase() {
+            const dataRef = firebaseRef(firebaseDB, 'slm-analysis/data');
+            firebaseGet(dataRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    analysisData = snapshot.val();
+                }
+                renderOverview();
+                renderTabs();
+            }).catch(error => {
+                console.error('Firebase load error:', error);
+                renderOverview();
+                renderTabs();
+            });
+            
+            // Load settings
+            const settingsRef = firebaseRef(firebaseDB, 'slm-analysis/settings');
+            firebaseGet(settingsRef).then((snapshot) => {
+                if (snapshot.exists()) {
+                    settings = snapshot.val();
+                }
+            });
         }
 
         // CSV Import Handler
@@ -1032,7 +1082,14 @@
             container.innerHTML = `
                 <div class="tab-detail-header">
                     <div class="tab-detail-title">📂 ${tabName}</div>
-                    <button onclick="closeTabDetail()">← Zurück</button>
+                    <div style="display: flex; gap: 15px; align-items: center;">
+                        <select id="tabSwitcher" onchange="switchTab()" style="background: rgba(26, 26, 26, 0.9); border: 2px solid #ff1493; color: white; padding: 12px 20px; border-radius: 10px; font-size: 1em; font-weight: 600; cursor: pointer;">
+                            ${Object.keys(analysisData).map(name => 
+                                `<option value="${name}" ${name === tabName ? 'selected' : ''}>${name}</option>`
+                            ).join('')}
+                        </select>
+                        <button onclick="closeTabDetail()">← Zurück</button>
+                    </div>
                 </div>
 
                 <div class="files-list">
@@ -1255,6 +1312,11 @@
             document.getElementById('mainView').style.display = 'block';
         }
 
+        function switchTab() {
+            const newTabName = document.getElementById('tabSwitcher').value;
+            renderTabDetail(newTabName, analysisData[newTabName]);
+        }
+
         function deleteTab(tabName) {
             if (confirm(`Tab "${tabName}" wirklich löschen?`)) {
                 delete analysisData[tabName];
@@ -1420,10 +1482,18 @@
         }
 
         function saveData() {
-            localStorage.setItem('slm-analysis-data', JSON.stringify(analysisData));
+            const dataRef = firebaseRef(firebaseDB, 'slm-analysis/data');
+            firebaseSet(dataRef, analysisData).catch(error => {
+                console.error('Firebase save error:', error);
+            });
         }
 
         window.onload = init;
     </script>
+    
+    <!-- Footer -->
+    <div style="text-align: center; padding: 30px; margin-top: 50px; border-top: 2px solid rgba(255, 20, 147, 0.2); color: #666; font-size: 0.95em; letter-spacing: 2px;">
+        Made with 💖 by <span style="color: #ff1493; font-weight: 800;">David Omowanile</span>
+    </div>
 </body>
 </html>
