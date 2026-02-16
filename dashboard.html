@@ -1101,48 +1101,132 @@
         }
         
         function loadHistoryFromFirebase() {
-            // Load history data from Firebase (stored by bridge)
-            const historyRef = ref(database, 'slm-control/history');
-            get(historyRef).then((snapshot) => {
-                if (snapshot.exists()) {
-                    const historyObj = snapshot.val();
-                    const history = historyObj.data || [];
-                    
-                    if (history.length === 0) {
-                        console.log('⚠️ History ist leer');
-                        return;
-                    }
-                    
-                    // Clear current data
-                    timeLabels = [];
-                    tempData = [];
-                    humData = [];
-                    currentData = [];
-                    timestamps = [];
-                    
-                    // Load history into charts (up to 60 points, most recent)
-                    const entries = history.slice(-60);
-                    entries.forEach(entry => {
-                        // entry format: { temp, humidity, current, timestamp }
-                        const timestamp = new Date(entry.timestamp * 1000 || Date.now());
-                        const timeStr = timestamp.toLocaleTimeString('de-DE');
-                        
-                        timeLabels.push(timeStr);
-                        timestamps.push(timestamp);
-                        tempData.push(entry.temp || 0);
-                        humData.push(entry.humidity || 0);
-                        currentData.push(entry.current || 0);
+            // Show loading animation
+            showHistoryLoading();
+            
+            // Trigger history request from Arduino
+            const requestRef = ref(database, 'slm-control/status/requestHistory');
+            set(requestRef, Date.now()).then(() => {
+                console.log('📊 History-Request gesendet...');
+                
+                // Wait for bridge to process and upload
+                setTimeout(() => {
+                    // Load history data from Firebase (stored by bridge)
+                    const historyRef = ref(database, 'slm-control/history');
+                    get(historyRef).then((snapshot) => {
+                        if (snapshot.exists()) {
+                            const historyObj = snapshot.val();
+                            const history = historyObj.data || [];
+                            
+                            if (history.length === 0) {
+                                hideHistoryLoading('⚠️ Keine History-Daten verfügbar');
+                                return;
+                            }
+                            
+                            // Clear current data
+                            timeLabels = [];
+                            tempData = [];
+                            humData = [];
+                            currentData = [];
+                            timestamps = [];
+                            
+                            // Load history into charts (up to 60 points, most recent)
+                            const entries = history.slice(-60);
+                            const now = Date.now();
+                            
+                            entries.forEach((entry, index) => {
+                                // Calculate actual timestamp by going backwards from now
+                                const minutesAgo = (entries.length - index - 1) * (measureInterval / 60);
+                                const actualTimestamp = new Date(now - (minutesAgo * 60 * 1000));
+                                const timeStr = actualTimestamp.toLocaleTimeString('de-DE');
+                                
+                                timeLabels.push(timeStr);
+                                timestamps.push(actualTimestamp);
+                                tempData.push(entry.temp || 0);
+                                humData.push(entry.humidity || 0);
+                                currentData.push(entry.current || 0);
+                            });
+                            
+                            updateCharts();
+                            updateStats();
+                            
+                            // Show success message with time range
+                            const firstTime = timestamps[0].toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                            const lastTime = timestamps[timestamps.length - 1].toLocaleString('de-DE', { hour: '2-digit', minute: '2-digit' });
+                            const dateStr = timestamps[0].toLocaleDateString('de-DE');
+                            
+                            hideHistoryLoading(`✅ ${entries.length} Werte geladen! (${dateStr} ${firstTime} - ${lastTime})`);
+                        } else {
+                            hideHistoryLoading('⚠️ Keine History in Firebase gefunden');
+                        }
+                    }).catch(error => {
+                        console.error('❌ History laden fehlgeschlagen:', error);
+                        hideHistoryLoading('❌ Fehler beim Laden');
                     });
-                    
-                    updateCharts();
-                    updateStats();
-                    console.log(`✅ History geladen: ${entries.length} Werte`);
-                } else {
-                    console.log('⚠️ Keine History in Firebase gefunden');
-                }
-            }).catch(error => {
-                console.error('❌ History laden fehlgeschlagen:', error);
+                }, 3000); // Wait 3s for bridge to process
             });
+        }
+        
+        function showHistoryLoading() {
+            // Create loading overlay if it doesn't exist
+            let overlay = document.getElementById('historyLoadingOverlay');
+            if (!overlay) {
+                overlay = document.createElement('div');
+                overlay.id = 'historyLoadingOverlay';
+                overlay.style.cssText = `
+                    position: fixed;
+                    top: 80px;
+                    right: 20px;
+                    background: linear-gradient(135deg, rgba(255, 20, 147, 0.95) 0%, rgba(255, 105, 180, 0.95) 100%);
+                    backdrop-filter: blur(20px);
+                    border-radius: 15px;
+                    padding: 20px 30px;
+                    color: white;
+                    font-size: 1.1em;
+                    font-weight: 600;
+                    box-shadow: 0 10px 40px rgba(255, 20, 147, 0.6);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                    animation: slideIn 0.5s ease;
+                `;
+                document.body.appendChild(overlay);
+                
+                // Add keyframes
+                const style = document.createElement('style');
+                style.textContent = `
+                    @keyframes slideIn {
+                        from { transform: translateX(400px); opacity: 0; }
+                        to { transform: translateX(0); opacity: 1; }
+                    }
+                    @keyframes spin {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+            
+            overlay.innerHTML = `
+                <div style="width: 24px; height: 24px; border: 3px solid white; border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite;"></div>
+                <span>⏳ Lade History vom Arduino...</span>
+            `;
+            overlay.style.display = 'flex';
+        }
+        
+        function hideHistoryLoading(message) {
+            const overlay = document.getElementById('historyLoadingOverlay');
+            if (overlay) {
+                overlay.innerHTML = `<span>${message}</span>`;
+                setTimeout(() => {
+                    overlay.style.animation = 'slideIn 0.5s ease reverse';
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                    }, 500);
+                }, 3000);
+            }
+        }
         }
         
         function loadChartData() {
