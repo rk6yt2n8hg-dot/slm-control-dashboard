@@ -659,6 +659,15 @@
                 </div>
                 <div class="status-msg" id="humCritMsg"></div>
             </div>
+            
+            <div class="setting-card">
+                <h4>⏰ Filter-Intervall</h4>
+                <div class="setting-input-group">
+                    <input type="text" id="filterIntervalInput" readonly value="1.0" onclick="openNumpad('filterInterval', this.value, 'Stunden', 0.1, 24)">
+                    <label>Stunden</label>
+                </div>
+                <div class="status-msg" id="filterIntervalMsg"></div>
+            </div>
         </div>
         
         <!-- CHARTS -->
@@ -890,6 +899,13 @@
                         document.getElementById('humCritMsg').textContent = '✓ Gesendet';
                         setTimeout(() => document.getElementById('humCritMsg').textContent = '', 2000);
                     });
+                },
+                'filterInterval': () => {
+                    document.getElementById('filterIntervalInput').value = val.toFixed(1);
+                    set(ref(database, 'slm-control/status/setFilterInterval'), val).then(() => {
+                        document.getElementById('filterIntervalMsg').textContent = '✓ Gesendet';
+                        setTimeout(() => document.getElementById('filterIntervalMsg').textContent = '', 2000);
+                    });
                 }
             };
 
@@ -1020,6 +1036,9 @@
             }
             if (data.humCritThreshold) {
                 document.getElementById('humCritInput').value = Math.round(data.humCritThreshold);
+            }
+            if (data.filterInterval) {
+                document.getElementById('filterIntervalInput').value = data.filterInterval.toFixed(1);
             }
             
             document.getElementById('led1').classList.toggle('on', data.relay1);
