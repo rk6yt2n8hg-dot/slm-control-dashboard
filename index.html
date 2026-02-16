@@ -802,19 +802,35 @@
             currentChart = new Chart(document.getElementById('currentChart'), {
                 type: 'line',
                 data: { labels: [], datasets: [{ data: [], borderColor: '#ff1493', backgroundColor: 'rgba(255, 20, 147, 0.2)', borderWidth: 3, fill: true, tension: 0.4, pointRadius: 0 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { display: false } } }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                title: (ctx) => timeLabels[ctx[0].dataIndex] || '',
+                                label: (ctx) => `${ctx.parsed.y.toFixed(3)} A`
+                            }
+                        }
+                    }, 
+                    scales: { 
+                        y: { min: 0, max: 5, ticks: { color: '#666' }, grid: { color: '#2a2a2a' } }, 
+                        x: { display: false } 
+                    } 
+                }
             });
             
             tempChart = new Chart(document.getElementById('tempChart'), {
                 type: 'line',
                 data: { labels: [], datasets: [{ label: 'Temperatur', data: [], borderColor: '#ff1493', backgroundColor: 'rgba(255, 20, 147, 0.1)', borderWidth: 2, fill: true, tension: 0.4, pointRadius: 2 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#888' } } }, scales: { y: { ticks: { color: '#666' }, grid: { color: '#2a2a2a' } }, x: { ticks: { color: '#666' }, grid: { color: '#2a2a2a' } } } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#888' } } }, scales: { y: { min: 0, max: 50, ticks: { color: '#666' }, grid: { color: '#2a2a2a' } }, x: { ticks: { color: '#666' }, grid: { color: '#2a2a2a' } } } }
             });
             
             humChart = new Chart(document.getElementById('humChart'), {
                 type: 'line',
                 data: { labels: [], datasets: [{ label: 'Luftfeuchtigkeit', data: [], borderColor: '#ff69b4', backgroundColor: 'rgba(255, 105, 180, 0.1)', borderWidth: 2, fill: true, tension: 0.4, pointRadius: 2 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#888' } } }, scales: { y: { ticks: { color: '#666' }, grid: { color: '#2a2a2a' } }, x: { ticks: { color: '#666' }, grid: { color: '#2a2a2a' } } } }
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#888' } } }, scales: { y: { min: 0, max: 100, ticks: { color: '#666' }, grid: { color: '#2a2a2a' } }, x: { ticks: { color: '#666' }, grid: { color: '#2a2a2a' } } } }
             });
         }
 
