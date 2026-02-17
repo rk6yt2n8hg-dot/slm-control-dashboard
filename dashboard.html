@@ -1290,7 +1290,7 @@
         window.loadHistory = async () => {
             const btn = document.getElementById('historyBtn');
             btn.disabled = true;
-            btn.textContent = '⏳ Lade 24h...';
+            btn.textContent = '⏳ Lade 5min-Slots...';
             btn.style.animation = 'pulse 1s infinite';
             
             try {
@@ -1298,7 +1298,7 @@
                 await set(ref(database, 'slm-control/status/requestHourlyHistory'), Date.now());
                 
                 // Warten bis Bridge HH schickt und Firebase aktualisiert
-                showToast('📡 Bridge sendet HH-Command...', 'success');
+                showToast('📡 Bridge sendet HH-Command (5min-Slots)...', 'success');
                 await new Promise(resolve => setTimeout(resolve, 5000));
                 
                 // Aus Firebase hourly/ laden
@@ -1328,17 +1328,20 @@
                 const hAvgArr = [], hMinArr = [], hMaxArr = [];
                 
                 slots.forEach(slot => {
-                    // Key: YYYY-MM-DD-HH → Label: "DD.MM. HH:00"
+                    // Key: YYYY-MM-DD-HH oder YYYY-MM-DD-HH-MM
                     const parts = slot.key.split('-');
-                    if (parts.length >= 4) {
-                        const label = `${parts[2]}.${parts[1]}. ${parts[3]}:00`;
-                        tempLabels.push(label);
-                        humLabels.push(label);
+                    let label;
+                    if (parts.length >= 5) {
+                        // 5min-Testmodus: YYYY-MM-DD-HH-MM → "DD.MM. HH:MM"
+                        label = `${parts[2]}.${parts[1]}. ${parts[3]}:${parts[4]}`;
+                    } else if (parts.length >= 4) {
+                        // Produktionsmodus: YYYY-MM-DD-HH → "DD.MM. HH:00"
+                        label = `${parts[2]}.${parts[1]}. ${parts[3]}:00`;
                     } else {
-                        const label = slot.key;
-                        tempLabels.push(label);
-                        humLabels.push(label);
+                        label = slot.key;
                     }
+                    tempLabels.push(label);
+                    humLabels.push(label);
                     
                     tAvgArr.push(slot.tAvg ?? null);
                     tMinArr.push(slot.tMin ?? null);
@@ -1465,10 +1468,12 @@
                 
                 // Meta info
                 const meta = hourlyObj._meta;
+                const slotMin = meta && meta.slotSeconds ? meta.slotSeconds / 60 : 60;
+                const slotLabel = slotMin < 60 ? `${slotMin}min-Slots` : 'Stunden-Slots';
                 const firstSlot = slots[0].key;
                 const lastSlot = slots[slots.length - 1].key;
                 const isCurrent = slots[slots.length - 1].current;
-                showToast(`✅ ${slots.length} Stunden-Slots | ${firstSlot.slice(0,13)} → ${lastSlot.slice(0,13)}${isCurrent ? ' (laufend)' : ''}`, 'success');
+                showToast(`✅ ${slots.length} ${slotLabel} | ${firstSlot.slice(0,13)} → ${lastSlot.slice(0,13)}${isCurrent ? ' (laufend)' : ''}`, 'success');
                 
             } catch (error) {
                 console.error('Hourly History Fehler:', error);
