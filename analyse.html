@@ -1264,6 +1264,9 @@
                 const hums = dataset.data.map(d => d.humidity);
                 const currents = dataset.data.map(d => d.current);
                 
+                const metaTemps = dataset.data.map(d => d.temperature);
+                const metaHums  = dataset.data.map(d => d.humidity);
+                
                 tempDatasets.push({
                     label: dataset.fileName,
                     data: temps.map((y, x) => ({ x, y })),
@@ -1272,7 +1275,9 @@
                     borderWidth: 2,
                     tension: 0.4,
                     hidden: !dataset.visible,
-                    pointRadius: 0
+                    pointRadius: 0,
+                    pointHoverRadius: 7,
+                    meta: { rawTemps: metaTemps }
                 });
                 
                 humDatasets.push({
@@ -1283,7 +1288,9 @@
                     borderWidth: 2,
                     tension: 0.4,
                     hidden: !dataset.visible,
-                    pointRadius: 0
+                    pointRadius: 0,
+                    pointHoverRadius: 7,
+                    meta: { rawHums: metaHums }
                 });
                 
                 currentDatasets.push({
@@ -1294,7 +1301,8 @@
                     borderWidth: 2,
                     tension: 0.4,
                     hidden: !dataset.visible,
-                    pointRadius: 0
+                    pointRadius: 0,
+                    pointHoverRadius: 7
                 });
             });
             
@@ -1313,9 +1321,36 @@
                     plugins: {
                         legend: { display: false },
                         tooltip: {
+                            backgroundColor: 'rgba(15,15,15,0.95)',
+                            titleColor: '#ff69b4',
+                            bodyColor: '#ccc',
+                            borderColor: '#ff1493',
+                            borderWidth: 1,
+                            padding: 14,
                             callbacks: {
-                                title: (ctx) => `Messung #${ctx[0].parsed.x}`,
-                                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}°C`
+                                title: (ctx) => `📍 Messung #${ctx[0].parsed.x + 1}`,
+                                afterTitle: () => `━━━━━━━━━━━━━━━━━`,
+                                label: (ctx) => {
+                                    const ds = ctx.dataset;
+                                    const i = ctx.dataIndex;
+                                    const raw = ds.meta?.rawTemps;
+                                    if (raw && raw.length > 0) {
+                                        const val = ctx.parsed.y.toFixed(1);
+                                        // If CSV has hourly data: show min/max from nearby window
+                                        const windowSize = Math.min(10, raw.length);
+                                        const start = Math.max(0, i - Math.floor(windowSize/2));
+                                        const slice = raw.slice(start, start + windowSize);
+                                        const min = Math.min(...slice).toFixed(1);
+                                        const max = Math.max(...slice).toFixed(1);
+                                        return [
+                                            `📂 ${ds.label}`,
+                                            `🌡️  Wert: ${val}°C`,
+                                            `📈 Max:  ${max}°C`,
+                                            `📉 Min:  ${min}°C`
+                                        ];
+                                    }
+                                    return `${ds.label}: ${ctx.parsed.y.toFixed(1)}°C`;
+                                }
                             }
                         }
                     },
@@ -1347,9 +1382,35 @@
                     plugins: {
                         legend: { display: false },
                         tooltip: {
+                            backgroundColor: 'rgba(15,15,15,0.95)',
+                            titleColor: '#ff69b4',
+                            bodyColor: '#ccc',
+                            borderColor: '#ff1493',
+                            borderWidth: 1,
+                            padding: 14,
                             callbacks: {
-                                title: (ctx) => `Messung #${ctx[0].parsed.x}`,
-                                label: (ctx) => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(1)}%`
+                                title: (ctx) => `📍 Messung #${ctx[0].parsed.x + 1}`,
+                                afterTitle: () => `━━━━━━━━━━━━━━━━━`,
+                                label: (ctx) => {
+                                    const ds = ctx.dataset;
+                                    const i = ctx.dataIndex;
+                                    const raw = ds.meta?.rawHums;
+                                    if (raw && raw.length > 0) {
+                                        const val = ctx.parsed.y.toFixed(1);
+                                        const windowSize = Math.min(10, raw.length);
+                                        const start = Math.max(0, i - Math.floor(windowSize/2));
+                                        const slice = raw.slice(start, start + windowSize);
+                                        const min = Math.min(...slice).toFixed(1);
+                                        const max = Math.max(...slice).toFixed(1);
+                                        return [
+                                            `📂 ${ds.label}`,
+                                            `💧  Wert: ${val}%`,
+                                            `📈 Max:  ${max}%`,
+                                            `📉 Min:  ${min}%`
+                                        ];
+                                    }
+                                    return `${ds.label}: ${ctx.parsed.y.toFixed(1)}%`;
+                                }
                             }
                         }
                     },
