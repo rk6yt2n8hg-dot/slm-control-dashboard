@@ -1290,87 +1290,189 @@
         window.loadHistory = async () => {
             const btn = document.getElementById('historyBtn');
             btn.disabled = true;
-            btn.textContent = '⏳ Lade...';
+            btn.textContent = '⏳ Lade 24h...';
             btn.style.animation = 'pulse 1s infinite';
             
             try {
-                // Trigger Arduino history request via Firebase
-                await set(ref(database, 'slm-control/status/requestHistory'), Date.now());
+                // Trigger Arduino HH command via Firebase
+                await set(ref(database, 'slm-control/status/requestHourlyHistory'), Date.now());
                 
-                // Wait for bridge to send 'H' command to Arduino and get response
-                await new Promise(resolve => setTimeout(resolve, 4000));
+                // Warten bis Bridge HH schickt und Firebase aktualisiert
+                showToast('📡 Bridge sendet HH-Command...', 'success');
+                await new Promise(resolve => setTimeout(resolve, 5000));
                 
-                // Now load from Firebase
-                const snapshot = await get(ref(database, 'slm-control/history'));
+                // Aus Firebase hourly/ laden
+                const snapshot = await get(ref(database, 'slm-control/hourly'));
                 
                 if (!snapshot.exists()) {
-                    showToast('⚠️ Keine History verfügbar', 'warning');
+                    showToast('⚠️ Noch keine 24h-Daten (Arduino < 1h aktiv?)', 'warning');
                     return;
                 }
                 
-                const historyObj = snapshot.val();
-                const history = historyObj.data || [];
+                const hourlyObj = snapshot.val();
                 
-                if (history.length === 0) {
-                    showToast('⚠️ History ist leer', 'warning');
+                // Slots sammeln (Keys außer _meta)
+                const slots = Object.entries(hourlyObj)
+                    .filter(([k]) => k !== '_meta')
+                    .map(([k, v]) => ({ key: k, ...v }))
+                    .sort((a, b) => a.key.localeCompare(b.key)); // zeitlich sortieren
+                
+                if (slots.length === 0) {
+                    showToast('⚠️ Keine Stunden-Slots gefunden', 'warning');
                     return;
                 }
                 
-                // Clear existing chart data
+                // Chart-Daten aufbauen
+                const tempLabels = [], humLabels = [];
+                const tAvgArr = [], tMinArr = [], tMaxArr = [];
+                const hAvgArr = [], hMinArr = [], hMaxArr = [];
+                
+                slots.forEach(slot => {
+                    // Key: YYYY-MM-DD-HH → Label: "DD.MM. HH:00"
+                    const parts = slot.key.split('-');
+                    if (parts.length >= 4) {
+                        const label = `${parts[2]}.${parts[1]}. ${parts[3]}:00`;
+                        tempLabels.push(label);
+                        humLabels.push(label);
+                    } else {
+                        const label = slot.key;
+                        tempLabels.push(label);
+                        humLabels.push(label);
+                    }
+                    
+                    tAvgArr.push(slot.tAvg ?? null);
+                    tMinArr.push(slot.tMin ?? null);
+                    tMaxArr.push(slot.tMax ?? null);
+                    hAvgArr.push(slot.hAvg ?? null);
+                    hMinArr.push(slot.hMin ?? null);
+                    hMaxArr.push(slot.hMax ?? null);
+                });
+                
+                // Bestehende Chart-Daten ersetzen
                 rawData = [];
                 hourlyBuckets = {};
                 timeLabels = []; timestamps = [];
                 tempData = []; humData = []; currentData = [];
                 
-                // Process history entries - calculate timestamps backwards from now
-                const entries = history.slice(-60);
-                const now = Date.now();
-                
-                entries.forEach((entry, index) => {
-                    const minutesAgo = (entries.length - 1 - index) * (measureInterval / 60);
-                    const entryTime = new Date(now - minutesAgo * 60 * 1000);
-                    const temp = entry.temp ?? entry.temperature ?? 0;
-                    const hum = entry.humidity ?? entry.hum ?? 0;
-                    const curr = entry.current ?? 0;
-                    
-                    // Add to raw data
-                    rawData.push({ time: entryTime, temp, hum, current: curr });
-                    
-                    // Add to live current chart
-                    timeLabels.push(entryTime.toLocaleTimeString('de-DE'));
-                    timestamps.push(entryTime);
-                    tempData.push(temp);
-                    humData.push(hum);
-                    currentData.push(curr);
-                    
-                    // Add to hourly buckets
-                    const bucket10min = Math.floor(entryTime.getMinutes() / 10) * 10;
-                    const bucketKey = `${entryTime.getFullYear()}-${String(entryTime.getMonth()+1).padStart(2,'0')}-${String(entryTime.getDate()).padStart(2,'0')} ${String(entryTime.getHours()).padStart(2,'0')}:${String(bucket10min).padStart(2,'0')}`;
-                    const labelStr = `${String(entryTime.getDate()).padStart(2,'0')}.${String(entryTime.getMonth()+1).padStart(2,'0')}. ${String(entryTime.getHours()).padStart(2,'0')}:${String(bucket10min).padStart(2,'0')}`;
-                    
-                    if (!hourlyBuckets[bucketKey]) {
-                        hourlyBuckets[bucketKey] = { temps: [], hums: [], currents: [], label: labelStr };
-                    }
-                    hourlyBuckets[bucketKey].temps.push(temp);
-                    hourlyBuckets[bucketKey].hums.push(hum);
-                    hourlyBuckets[bucketKey].currents.push(curr);
+                // Slots als rawData aufbereiten (für Stats)
+                slots.forEach((slot, i) => {
+                    rawData.push({
+                        time: new Date(tempLabels[i]),
+                        temp: slot.tAvg ?? 0,
+                        hum: slot.hAvg ?? 0,
+                        current: 0
+                    });
+                    tempData.push(slot.tAvg ?? 0);
+                    humData.push(slot.hAvg ?? 0);
+                    currentData.push(0);
+                    timeLabels.push(tempLabels[i]);
+                    timestamps.push(i);
                 });
                 
-                updateCharts();
+                // Charts direkt updaten mit Ø/Min/Max Datasets
+                const tempChartObj = Chart.getChart('tempChart');
+                const humChartObj = Chart.getChart('humChart');
+                
+                if (tempChartObj) {
+                    tempChartObj.data.labels = tempLabels;
+                    tempChartObj.data.datasets = [
+                        {
+                            label: 'Temp Ø (°C)',
+                            data: tAvgArr,
+                            borderColor: '#ff1493',
+                            backgroundColor: 'rgba(255,20,147,0.15)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointHoverRadius: 7
+                        },
+                        {
+                            label: 'Temp Min',
+                            data: tMinArr,
+                            borderColor: '#3b82f6',
+                            borderWidth: 1.5,
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 2
+                        },
+                        {
+                            label: 'Temp Max',
+                            data: tMaxArr,
+                            borderColor: '#ef4444',
+                            borderWidth: 1.5,
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 2
+                        }
+                    ];
+                    tempChartObj.options.plugins.tooltip = {
+                        callbacks: {
+                            title: ctx => ctx[0].label,
+                            label: ctx => `${ctx.dataset.label}: ${ctx.raw !== null ? ctx.raw.toFixed(1) : '--'}°C`
+                        }
+                    };
+                    tempChartObj.update('none');
+                }
+                
+                if (humChartObj) {
+                    humChartObj.data.labels = humLabels;
+                    humChartObj.data.datasets = [
+                        {
+                            label: 'LF Ø (%)',
+                            data: hAvgArr,
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59,130,246,0.15)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4,
+                            pointRadius: 4,
+                            pointHoverRadius: 7
+                        },
+                        {
+                            label: 'LF Min',
+                            data: hMinArr,
+                            borderColor: '#10b981',
+                            borderWidth: 1.5,
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 2
+                        },
+                        {
+                            label: 'LF Max',
+                            data: hMaxArr,
+                            borderColor: '#f59e0b',
+                            borderWidth: 1.5,
+                            borderDash: [5, 5],
+                            fill: false,
+                            tension: 0.4,
+                            pointRadius: 2
+                        }
+                    ];
+                    humChartObj.options.plugins.tooltip = {
+                        callbacks: {
+                            title: ctx => ctx[0].label,
+                            label: ctx => `${ctx.dataset.label}: ${ctx.raw !== null ? ctx.raw.toFixed(1) : '--'}%`
+                        }
+                    };
+                    humChartObj.update('none');
+                }
+                
                 updateStats();
                 
-                // Show success toast
-                const firstTime = new Date(now - (entries.length - 1) * (measureInterval / 60) * 60 * 1000);
-                const lastTime = new Date(now);
-                const dateStr = firstTime.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                const fromStr = firstTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                const toStr = lastTime.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
-                
-                showToast(`✅ ${entries.length} Werte geladen! ${dateStr} ${fromStr} – ${toStr}`, 'success');
+                // Meta info
+                const meta = hourlyObj._meta;
+                const firstSlot = slots[0].key;
+                const lastSlot = slots[slots.length - 1].key;
+                const isCurrent = slots[slots.length - 1].current;
+                showToast(`✅ ${slots.length} Stunden-Slots | ${firstSlot.slice(0,13)} → ${lastSlot.slice(0,13)}${isCurrent ? ' (laufend)' : ''}`, 'success');
                 
             } catch (error) {
-                console.error('History Fehler:', error);
-                showToast('❌ Fehler beim Laden der History', 'error');
+                console.error('Hourly History Fehler:', error);
+                showToast('❌ Fehler beim Laden der 24h-History', 'error');
             } finally {
                 btn.disabled = false;
                 btn.textContent = '📊 History laden';
