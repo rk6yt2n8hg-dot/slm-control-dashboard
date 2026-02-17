@@ -664,7 +664,7 @@
             <div class="setting-card">
                 <h4>⏱️ Messintervall</h4>
                 <div class="setting-input-group">
-                    <input type="text" id="intervalInput" readonly value="30" onclick="openNumpad('interval', this.value, 'Sekunden', 5, 600)">
+                    <input type="text" id="intervalInput" readonly value="600" onclick="openNumpad('interval', this.value, 'Sekunden', 5, 600)">
                     <label>Sekunden</label>
                 </div>
                 <div class="status-msg" id="intervalMsg"></div>
@@ -834,7 +834,7 @@
         let tempChart, humChart, currentChart;
         let isRealtimeMode = false;
         let updateInterval = null;
-        let measureInterval = 30;
+        let measureInterval = 600; // 10 Minuten
         
         // Raw data (every measurement - for CSV export)
         let rawData = [];
