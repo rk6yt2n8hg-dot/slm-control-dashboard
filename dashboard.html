@@ -664,7 +664,7 @@
             <div class="setting-card">
                 <h4>⏱️ Messintervall</h4>
                 <div class="setting-input-group">
-                    <input type="text" id="intervalInput" readonly value="600" onclick="openNumpad('interval', this.value, 'Sekunden', 5, 600)">
+                    <input type="text" id="intervalInput" readonly value="30" onclick="openNumpad('interval', this.value, 'Sekunden', 5, 600)">
                     <label>Sekunden</label>
                 </div>
                 <div class="status-msg" id="intervalMsg"></div>
@@ -834,13 +834,13 @@
         let tempChart, humChart, currentChart;
         let isRealtimeMode = false;
         let updateInterval = null;
-        let measureInterval = 600; // 10 Minuten
+        let measureInterval = 30; // 30 Sekunden Messintervall
         
         // Raw data (every measurement - for CSV export)
         let rawData = [];
         
         // Hourly aggregated data (for charts)
-        let hourlyBuckets = {};  // key: "YYYY-MM-DD HH" → { temps:[], hums:[], currents:[], label: "16.02. 14:00" }
+        let hourlyBuckets = {};  // key: "YYYY-MM-DD HH:MM" (10min Buckets) → { temps:[], hums:[], currents:[], label: "16.02. 14:20" }
         let hourlyLabels = [];
         let hourlyTempAvg = [];
         let hourlyHumAvg = [];
@@ -1096,9 +1096,10 @@
                 tempData.shift(); humData.shift(); currentData.shift();
             }
             
-            // Hourly bucket key: "2026-02-16 14"
-            const bucketKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}`;
-            const labelStr = `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}. ${String(now.getHours()).padStart(2,'0')}:00`;
+            // 10-Minuten Bucket key: "2026-02-16 14:20" (auf 10min gerundet)
+            const bucket10min = Math.floor(now.getMinutes() / 10) * 10; // 0,10,20,30,40,50
+            const bucketKey = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(bucket10min).padStart(2,'0')}`;
+            const labelStr = `${String(now.getDate()).padStart(2,'0')}.${String(now.getMonth()+1).padStart(2,'0')}. ${String(now.getHours()).padStart(2,'0')}:${String(bucket10min).padStart(2,'0')}`;
             
             if (!hourlyBuckets[bucketKey]) {
                 hourlyBuckets[bucketKey] = { temps: [], hums: [], currents: [], label: labelStr };
@@ -1343,8 +1344,9 @@
                     currentData.push(curr);
                     
                     // Add to hourly buckets
-                    const bucketKey = `${entryTime.getFullYear()}-${String(entryTime.getMonth()+1).padStart(2,'0')}-${String(entryTime.getDate()).padStart(2,'0')} ${String(entryTime.getHours()).padStart(2,'0')}`;
-                    const labelStr = `${String(entryTime.getDate()).padStart(2,'0')}.${String(entryTime.getMonth()+1).padStart(2,'0')}. ${String(entryTime.getHours()).padStart(2,'0')}:00`;
+                    const bucket10min = Math.floor(entryTime.getMinutes() / 10) * 10;
+                    const bucketKey = `${entryTime.getFullYear()}-${String(entryTime.getMonth()+1).padStart(2,'0')}-${String(entryTime.getDate()).padStart(2,'0')} ${String(entryTime.getHours()).padStart(2,'0')}:${String(bucket10min).padStart(2,'0')}`;
+                    const labelStr = `${String(entryTime.getDate()).padStart(2,'0')}.${String(entryTime.getMonth()+1).padStart(2,'0')}. ${String(entryTime.getHours()).padStart(2,'0')}:${String(bucket10min).padStart(2,'0')}`;
                     
                     if (!hourlyBuckets[bucketKey]) {
                         hourlyBuckets[bucketKey] = { temps: [], hums: [], currents: [], label: labelStr };
