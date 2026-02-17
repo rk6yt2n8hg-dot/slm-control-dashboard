@@ -970,7 +970,7 @@
                 };
 
                 if (pendingCSV.data.length === 0) {
-                    alert('❌ Fehler: CSV enthält keine gültigen Daten!');
+                    alert('❌ Fehler: CSV enthält keine gültigen Daten!\n\nMögliche Ursachen:\n• Nur "Invalid Date" Einträge (Arduino hatte noch keinen Timestamp)\n• Leere Rohdaten-Sektion\n• Unbekanntes Format');
                     return;
                 }
 
@@ -1038,6 +1038,8 @@
                                 timeStr = (parts[0] + ' ' + parts[1]).trim();
                                 tempIdx = 2; humIdx = 3; currIdx = 4;
                             }
+                            // "Invalid Date" überspringen
+                            if (timeStr === 'Invalid Date' || timeStr === '') continue;
                             const temp = parseFloat(parts[tempIdx]);
                             const hum  = parseFloat(parts[humIdx]);
                             const curr = parseFloat(parts[currIdx]);
