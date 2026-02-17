@@ -1339,17 +1339,20 @@
                 const hAvgArr = [], hMinArr = [], hMaxArr = [];
                 
                 slots.forEach(slot => {
-                    // Key: YYYY-MM-DD-HH → Label: "DD.MM. HH:00"
+                    // Key: "YYYY-MM-DD-HH" oder "YYYY-MM-DD-HH-MM"
                     const parts = slot.key.split('-');
-                    if (parts.length >= 4) {
-                        const label = `${parts[2]}.${parts[1]}. ${parts[3]}:00`;
-                        tempLabels.push(label);
-                        humLabels.push(label);
+                    let label;
+                    if (parts.length >= 5) {
+                        // 5min-Testmodus: YYYY-MM-DD-HH-MM → "DD.MM. HH:MM"
+                        label = `${parts[2]}.${parts[1]}. ${parts[3]}:${parts[4]}`;
+                    } else if (parts.length >= 4) {
+                        // Produktionsmodus: YYYY-MM-DD-HH → "DD.MM. HH:00"
+                        label = `${parts[2]}.${parts[1]}. ${parts[3]}:00`;
                     } else {
-                        const label = slot.key;
-                        tempLabels.push(label);
-                        humLabels.push(label);
+                        label = slot.key;
                     }
+                    tempLabels.push(label);
+                    humLabels.push(label);
                     
                     tAvgArr.push(slot.tAvg ?? null);
                     tMinArr.push(slot.tMin ?? null);
