@@ -623,6 +623,7 @@
                 <button id="intervalBtn" onclick="setIntervalMode()">⏱️ Intervall-Update</button>
                 <button id="realtimeBtn" onclick="setRealtimeMode()">⚡ Echtzeit</button>
                 <button class="secondary" onclick="loadHistory()" id="historyBtn" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); border: none;">📊 History laden</button>
+                <button class="secondary" onclick="exitHistoryMode()" id="liveBtn" style="background: linear-gradient(135deg, #374151 0%, #1f2937 100%); border: none; display:none;">⚡ Zurück zu Live</button>
                 <button class="secondary" onclick="takeScreenshot()">📸 Screenshot</button>
                 <button class="secondary" onclick="exportCSV()">📥 Export</button>
                 <button class="secondary" onclick="location.reload()">🔄 Reload</button>
@@ -833,6 +834,7 @@
 
         let tempChart, humChart, currentChart;
         let isRealtimeMode = false;
+        let isHistoryMode = false;  // ← NEU: History-Modus sperrt Live-Chart-Updates
         let updateInterval = null;
         let measureInterval = 30; // 30 Sekunden Messintervall
         
@@ -1113,15 +1115,17 @@
         }
 
         function updateCharts() {
-            // Update current chart (live raw data)
+            // Current chart (Strom) immer live aktualisieren
             currentChart.data.labels = timeLabels;
             currentChart.data.datasets[0].data = currentData;
-            // Dynamic Y-axis scaling
             if (currentData.length > 0) {
                 const maxC = Math.max(...currentData);
                 currentChart.options.scales.y.suggestedMax = maxC > 5 ? 10 : maxC > 4 ? 6 : maxC > 3 ? 4 : maxC > 2 ? 3 : maxC > 1 ? 2 : 1;
             }
             currentChart.update('none');
+            
+            // Temp/Hum Charts: nur updaten wenn KEIN History-Modus aktiv
+            if (isHistoryMode) return;
             
             // Rebuild hourly aggregated chart data
             const sortedKeys = Object.keys(hourlyBuckets).sort();
@@ -1292,6 +1296,10 @@
             btn.disabled = true;
             btn.textContent = '⏳ Lade 5min-Slots...';
             btn.style.animation = 'pulse 1s infinite';
+            
+            // History-Modus aktivieren → Live-Updates schreiben Charts nicht mehr
+            isHistoryMode = true;
+            document.getElementById('liveBtn').style.display = 'inline-block';
             
             try {
                 // Trigger Arduino HH command via Firebase
@@ -1466,6 +1474,21 @@
                 
                 updateStats();
                 
+                // History-Banner anzeigen
+                let banner = document.getElementById('historyBanner');
+                if (!banner) {
+                    banner = document.createElement('div');
+                    banner.id = 'historyBanner';
+                    banner.style.cssText = `
+                        background: linear-gradient(135deg, #4c1d95, #7c3aed);
+                        color: white; padding: 12px 20px; border-radius: 10px;
+                        margin-bottom: 15px; text-align: center; font-weight: 600;
+                        border: 1px solid #8b5cf6;
+                    `;
+                    document.querySelector('.charts-section').insertAdjacentElement('beforebegin', banner);
+                }
+                banner.innerHTML = `📊 History-Modus aktiv — Live-Updates pausiert &nbsp;|&nbsp; <a href="#" onclick="exitHistoryMode(); document.getElementById('historyBanner').remove(); return false;" style="color:#c4b5fd;">⚡ Zurück zu Live</a>`;
+                
                 // Meta info
                 const meta = hourlyObj._meta;
                 const slotMin = meta && meta.slotSeconds ? meta.slotSeconds / 60 : 60;
@@ -1478,6 +1501,9 @@
             } catch (error) {
                 console.error('Hourly History Fehler:', error);
                 showToast('❌ Fehler beim Laden der 24h-History', 'error');
+                // History-Modus bei Fehler wieder deaktivieren
+                isHistoryMode = false;
+                document.getElementById('liveBtn').style.display = 'none';
             } finally {
                 btn.disabled = false;
                 btn.textContent = '📊 History laden';
@@ -1485,6 +1511,42 @@
             }
         };
         
+        window.exitHistoryMode = () => {
+            isHistoryMode = false;
+            document.getElementById('liveBtn').style.display = 'none';
+            const banner = document.getElementById('historyBanner');
+            if (banner) banner.remove();
+            
+            // Charts auf Live-Daten zurücksetzen
+            const tempChartObj = Chart.getChart('tempChart');
+            const humChartObj = Chart.getChart('humChart');
+            
+            if (tempChartObj) {
+                tempChartObj.data.datasets = [{
+                    label: 'Temperatur Ø',
+                    data: [],
+                    borderColor: '#ff1493',
+                    backgroundColor: 'rgba(255, 20, 147, 0.1)',
+                    borderWidth: 2, fill: true, tension: 0.4, pointRadius: 4, pointHoverRadius: 8
+                }];
+                tempChartObj.update('none');
+            }
+            if (humChartObj) {
+                humChartObj.data.datasets = [{
+                    label: 'Luftfeuchtigkeit Ø',
+                    data: [],
+                    borderColor: '#ff69b4',
+                    backgroundColor: 'rgba(255, 105, 180, 0.1)',
+                    borderWidth: 2, fill: true, tension: 0.4, pointRadius: 4, pointHoverRadius: 8
+                }];
+                humChartObj.update('none');
+            }
+            
+            // Neu aufbauen aus hourlyBuckets (Live-Daten seit Seitenstart)
+            updateCharts();
+            showToast('⚡ Live-Modus aktiv', 'success');
+        };
+
         function showToast(message, type) {
             // Remove existing toast
             const existing = document.getElementById('slmToast');
