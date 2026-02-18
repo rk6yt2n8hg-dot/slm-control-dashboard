@@ -683,7 +683,7 @@
             <div class="setting-card">
                 <h4>⚡ Strom Überlast</h4>
                 <div class="setting-input-group">
-                    <input type="text" id="overloadInput" readonly value="4.0" onclick="openNumpad('overload', this.value, 'Ampere', 1, 5)">
+                    <input type="text" id="overloadInput" readonly value="1.5" onclick="openNumpad('overload', this.value, 'Ampere', 0.5, 3)">
                     <label>Ampere</label>
                 </div>
                 <div class="status-msg" id="overloadMsg"></div>
@@ -692,7 +692,7 @@
             <div class="setting-card">
                 <h4>⚠️ Lüfter Ausfall</h4>
                 <div class="setting-input-group">
-                    <input type="text" id="failedInput" readonly value="0.1" onclick="openNumpad('failed', this.value, 'A (min)', 0.05, 1)">
+                    <input type="text" id="failedInput" readonly value="0.02" onclick="openNumpad('failed', this.value, 'A (min)', 0.01, 0.5)">
                     <label>A (min)</label>
                 </div>
                 <div class="status-msg" id="failedMsg"></div>
